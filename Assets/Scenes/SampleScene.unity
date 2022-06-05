@@ -702,6 +702,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hopTime: 0.1
+  superHopTime: 0.2
+  turnTime: 0.05
+  hopHeight: 0.5
 --- !u!1001 &1112058224
 PrefabInstance:
   m_ObjectHideFlags: 0
