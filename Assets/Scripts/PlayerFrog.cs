@@ -7,7 +7,8 @@ public enum PlayerState
     STANDING,
     HOPPING,
     SUPERHOPPING,
-    TURNING
+    TURNING,
+    FALLING
 }
 
 public class PlayerFrog : MonoBehaviour
@@ -18,6 +19,11 @@ public class PlayerFrog : MonoBehaviour
     private float moveTimer = 0f;
 
     public float hopHeight = 0.5f;
+    public float superHopHeight = 0.7f;
+
+    private float gravity = -9.8f;
+    private float fallVelocity = 0f;
+    private float startFallVelocity = -3f;
 
     private PlayerState state;
 
@@ -51,7 +57,7 @@ public class PlayerFrog : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.UpArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.forward, sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + Vector3.forward + (Vector3.up * 0.5f), sphereCollider.radius))
                 {
                     hopDirection = Vector3.forward;
                     state = PlayerState.HOPPING;
@@ -65,7 +71,7 @@ public class PlayerFrog : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.right, sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + Vector3.right + (Vector3.up * 0.5f), sphereCollider.radius))
                 {
                     hopDirection = Vector3.right;
                     state = PlayerState.HOPPING;
@@ -79,7 +85,7 @@ public class PlayerFrog : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.DownArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.back, sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + Vector3.back + (Vector3.up * 0.5f), sphereCollider.radius))
                 {
                     hopDirection = Vector3.back;
                     state = PlayerState.HOPPING;
@@ -93,12 +99,13 @@ public class PlayerFrog : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.left, sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + Vector3.left + (Vector3.up * 0.5f), sphereCollider.radius))
                 {
                     hopDirection = Vector3.left;
                     state = PlayerState.HOPPING;
                 }
                 else if (transform.forward != Vector3.left)
+
                 {
                     nextRotation = Quaternion.LookRotation(Vector3.left, Vector3.up);
                     moveTimer = turnTime;
@@ -107,9 +114,9 @@ public class PlayerFrog : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
-                if (!Physics.CheckSphere(lastPosition + (transform.forward), sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + (transform.forward) + (Vector3.up * 0.5f), sphereCollider.radius))
                 {
-                    if (!Physics.CheckSphere(lastPosition + (transform.forward * 2f), sphereCollider.radius))
+                    if (!Physics.CheckSphere(lastPosition + (transform.forward * 2f) + (Vector3.up * 0.5f), sphereCollider.radius))
                     {
                         hopDirection = transform.forward * 2f;
                         state = PlayerState.SUPERHOPPING;
@@ -160,7 +167,7 @@ public class PlayerFrog : MonoBehaviour
             moveTimer -= Time.deltaTime;
 
             float normalizedMoveTimer = GetNormalizedMoveTimer();
-            float hopHeightCurveY = (hopHeight * 4) * (-normalizedMoveTimer * normalizedMoveTimer + normalizedMoveTimer);
+            float hopHeightCurveY = (GetHopHeight() * 4) * (-normalizedMoveTimer * normalizedMoveTimer + normalizedMoveTimer);
 
             transform.position = Vector3.Slerp(lastPosition, nextPosition, normalizedMoveTimer);
             
@@ -173,17 +180,57 @@ public class PlayerFrog : MonoBehaviour
         }
 
         // Stop Moving
-        if (moveTimer <= 0f)
+        if (moveTimer <= 0f && state != PlayerState.FALLING)
         {
             moveTimer = 0f;
 
-            transform.position = Round(nextPosition);
+            transform.position = RoundXZ(nextPosition);
             lastPosition = transform.position;
 
             transform.rotation = nextRotation;
             lastRotation = transform.rotation;
 
             state = PlayerState.STANDING;
+        }
+
+        // Falling
+        RaycastHit hit;
+        bool isFloorBelow = Physics.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, out hit, 0.4f);
+
+        if (state == PlayerState.STANDING && !isFloorBelow)
+        {
+            fallVelocity = startFallVelocity;
+            state = PlayerState.FALLING;
+        }
+
+        if (state == PlayerState.FALLING)
+        {
+            if (isFloorBelow && transform.position.y - hit.point.y < 0f)
+            {
+                // transform.position = new Vector3(transform.position.x, 0.5f - (transform.position.y - hit.point.y), transform.position.z);
+                // Debug.Log(transform.position.y + "," + hit.point.y + "," + (0.5f - (transform.position.y - hit.point.y)));
+                transform.position = new Vector3(transform.position.x, hit.point.y, transform.position.z);
+
+                state = PlayerState.STANDING;
+
+                lastPosition = transform.position;
+                nextPosition = transform.position;
+            }
+            else
+            {
+                fallVelocity += gravity * Time.deltaTime;
+                transform.position += Vector3.up * fallVelocity * Time.deltaTime;
+            }
+        }
+    }
+
+    private float GetHopHeight()
+    {
+        switch (state)
+        {
+            case PlayerState.HOPPING: return hopHeight;
+            case PlayerState.SUPERHOPPING: return superHopHeight;
+            default: return hopHeight;
         }
     }
 
@@ -206,5 +253,10 @@ public class PlayerFrog : MonoBehaviour
     public static Vector3 Round(Vector3 vec)
     {
         return new Vector3(Mathf.Round(vec.x), Mathf.Round(vec.y), Mathf.Round(vec.z));
+    }
+
+    public static Vector3 RoundXZ(Vector3 vec)
+    {
+        return new Vector3(Mathf.Round(vec.x), vec.y, Mathf.Round(vec.z));
     }
 }
