@@ -28,6 +28,8 @@ public class PlayerFrog : MonoBehaviour
     private Quaternion lastRotation;
     private Quaternion nextRotation;
 
+    private SphereCollider sphereCollider;
+
     void Start()
     {
         lastPosition = transform.position;
@@ -37,56 +39,86 @@ public class PlayerFrog : MonoBehaviour
         nextRotation = transform.rotation;
 
         state = PlayerState.STANDING;
+
+        sphereCollider = GetComponent<SphereCollider>();
     }
 
     void Update()
     {
         Vector3 hopDirection = Vector3.zero;
 
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+        // Input and Collision Checking
+        if (state == PlayerState.STANDING)
         {
-            hopDirection = Vector3.forward;
-            state = PlayerState.HOPPING;
-        }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            hopDirection = Vector3.right;
-            state = PlayerState.HOPPING;
-        }
-        else if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            hopDirection = Vector3.back;
-            state = PlayerState.HOPPING;
-        }
-        else if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            hopDirection = Vector3.left;
-            state = PlayerState.HOPPING;
-        }
-        else if (Input.GetKeyDown(KeyCode.E))
-        {
-            hopDirection = transform.forward * 2f;
-            state = PlayerState.SUPERHOPPING;
-        }
-        else if (Input.GetKeyDown(KeyCode.Q))
-        {
-            if (moveTimer == 0f)
+            if (Input.GetKeyDown(KeyCode.UpArrow))
             {
-                nextRotation = transform.rotation * Quaternion.AngleAxis(-90f, Vector3.up);
-                moveTimer = turnTime;
-                state = PlayerState.TURNINGLEFT;
+                if (!Physics.CheckSphere(lastPosition + Vector3.forward, sphereCollider.radius))
+                {
+                    hopDirection = Vector3.forward;
+                    state = PlayerState.HOPPING;
+                }
             }
-        }
-        else if (Input.GetKeyDown(KeyCode.W))
-        {
-            if (moveTimer == 0f)
+            else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                nextRotation = transform.rotation * Quaternion.AngleAxis(90f, Vector3.up);
-                moveTimer = turnTime;
-                state = PlayerState.TURNINGRIGHT;
+                if (!Physics.CheckSphere(lastPosition + Vector3.right, sphereCollider.radius))
+                {
+                    hopDirection = Vector3.right;
+                    state = PlayerState.HOPPING;
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                if (!Physics.CheckSphere(lastPosition + Vector3.back, sphereCollider.radius))
+                {
+                    hopDirection = Vector3.back;
+                    state = PlayerState.HOPPING;
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                if (!Physics.CheckSphere(lastPosition + Vector3.left, sphereCollider.radius))
+                {
+                    hopDirection = Vector3.left;
+                    state = PlayerState.HOPPING;
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (!Physics.CheckSphere(lastPosition + (transform.forward), sphereCollider.radius))
+                {
+                    if (!Physics.CheckSphere(lastPosition + (transform.forward * 2f), sphereCollider.radius))
+                    {
+                        hopDirection = transform.forward * 2f;
+                        state = PlayerState.SUPERHOPPING;
+                    }
+                    else
+                    {
+                        hopDirection = transform.forward;
+                        state = PlayerState.HOPPING;
+                    }
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.Q))
+            {
+                if (moveTimer == 0f)
+                {
+                    nextRotation = transform.rotation * Quaternion.AngleAxis(-90f, Vector3.up);
+                    moveTimer = turnTime;
+                    state = PlayerState.TURNINGLEFT;
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.W))
+            {
+                if (moveTimer == 0f)
+                {
+                    nextRotation = transform.rotation * Quaternion.AngleAxis(90f, Vector3.up);
+                    moveTimer = turnTime;
+                    state = PlayerState.TURNINGRIGHT;
+                }
             }
         }
 
+        // Prepare Movement
         if (hopDirection != Vector3.zero && moveTimer == 0f)
         {
             nextPosition = lastPosition + hopDirection;
@@ -99,6 +131,7 @@ public class PlayerFrog : MonoBehaviour
             }
         }
 
+        // Movement
         if (moveTimer > 0f)
         {
             moveTimer -= Time.deltaTime;
@@ -116,11 +149,12 @@ public class PlayerFrog : MonoBehaviour
             transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedMoveTimer);
         }
 
+        // Stop Moving
         if (moveTimer <= 0f)
         {
             moveTimer = 0f;
 
-            transform.position = nextPosition;
+            transform.position = Round(nextPosition);
             lastPosition = transform.position;
 
             transform.rotation = nextRotation;
@@ -140,5 +174,15 @@ public class PlayerFrog : MonoBehaviour
             case PlayerState.TURNINGRIGHT: return 1 - (moveTimer / turnTime);
             default: return 0;
         }
+    }
+
+    public static bool IsSnapped(Vector3 vec)
+    {
+        return Mathf.Approximately(vec.x % 1f, 0f) && Mathf.Approximately(vec.y % 1f, 0f) && Mathf.Approximately(vec.z % 1f, 0f);
+    }
+
+    public static Vector3 Round(Vector3 vec)
+    {
+        return new Vector3(Mathf.Round(vec.x), Mathf.Round(vec.y), Mathf.Round(vec.z));
     }
 }
