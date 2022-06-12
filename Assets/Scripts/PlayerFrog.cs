@@ -7,8 +7,7 @@ public enum PlayerState
     STANDING,
     HOPPING,
     SUPERHOPPING,
-    TURNINGRIGHT,
-    TURNINGLEFT
+    TURNING
 }
 
 public class PlayerFrog : MonoBehaviour
@@ -57,6 +56,12 @@ public class PlayerFrog : MonoBehaviour
                     hopDirection = Vector3.forward;
                     state = PlayerState.HOPPING;
                 }
+                else if (transform.forward != Vector3.forward)
+                {
+                    nextRotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
+                    moveTimer = turnTime;
+                    state = PlayerState.TURNING;
+                }
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
@@ -64,6 +69,12 @@ public class PlayerFrog : MonoBehaviour
                 {
                     hopDirection = Vector3.right;
                     state = PlayerState.HOPPING;
+                }
+                else if (transform.forward != Vector3.right)
+                {
+                    nextRotation = Quaternion.LookRotation(Vector3.right, Vector3.up);
+                    moveTimer = turnTime;
+                    state = PlayerState.TURNING;
                 }
             }
             else if (Input.GetKeyDown(KeyCode.DownArrow))
@@ -73,6 +84,12 @@ public class PlayerFrog : MonoBehaviour
                     hopDirection = Vector3.back;
                     state = PlayerState.HOPPING;
                 }
+                else if (transform.forward != Vector3.back)
+                {
+                    nextRotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
+                    moveTimer = turnTime;
+                    state = PlayerState.TURNING;
+                }
             }
             else if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
@@ -80,6 +97,12 @@ public class PlayerFrog : MonoBehaviour
                 {
                     hopDirection = Vector3.left;
                     state = PlayerState.HOPPING;
+                }
+                else if (transform.forward != Vector3.left)
+                {
+                    nextRotation = Quaternion.LookRotation(Vector3.left, Vector3.up);
+                    moveTimer = turnTime;
+                    state = PlayerState.TURNING;
                 }
             }
             else if (Input.GetKeyDown(KeyCode.E))
@@ -104,7 +127,7 @@ public class PlayerFrog : MonoBehaviour
                 {
                     nextRotation = transform.rotation * Quaternion.AngleAxis(-90f, Vector3.up);
                     moveTimer = turnTime;
-                    state = PlayerState.TURNINGLEFT;
+                    state = PlayerState.TURNING;
                 }
             }
             else if (Input.GetKeyDown(KeyCode.W))
@@ -113,7 +136,7 @@ public class PlayerFrog : MonoBehaviour
                 {
                     nextRotation = transform.rotation * Quaternion.AngleAxis(90f, Vector3.up);
                     moveTimer = turnTime;
-                    state = PlayerState.TURNINGRIGHT;
+                    state = PlayerState.TURNING;
                 }
             }
         }
@@ -141,7 +164,7 @@ public class PlayerFrog : MonoBehaviour
 
             transform.position = Vector3.Slerp(lastPosition, nextPosition, normalizedMoveTimer);
             
-            if (state != PlayerState.TURNINGLEFT && state != PlayerState.TURNINGRIGHT)
+            if (state != PlayerState.TURNING)
             {
                 transform.position += (Vector3.up * hopHeightCurveY);
             }
@@ -170,8 +193,7 @@ public class PlayerFrog : MonoBehaviour
         {
             case PlayerState.HOPPING: return 1 - (moveTimer / hopTime);
             case PlayerState.SUPERHOPPING: return 1 - (moveTimer / superHopTime);
-            case PlayerState.TURNINGLEFT: return 1 - (moveTimer / turnTime);
-            case PlayerState.TURNINGRIGHT: return 1 - (moveTimer / turnTime);
+            case PlayerState.TURNING: return 1 - (moveTimer / turnTime);
             default: return 0;
         }
     }
