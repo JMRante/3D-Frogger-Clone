@@ -21,6 +21,8 @@ public class PlayerFrog : MonoBehaviour
     public float hopHeight = 0.5f;
     public float superHopHeight = 0.7f;
 
+    public float hopMaxStepHeight = 0.6f;
+
     private float gravity = -9.8f;
     private float fallVelocity = 0f;
     private float startFallVelocity = -3f;
@@ -57,75 +59,30 @@ public class PlayerFrog : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.UpArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.forward + (Vector3.up * 0.5f), sphereCollider.radius))
-                {
-                    hopDirection = Vector3.forward;
-                    state = PlayerState.HOPPING;
-                }
-                else if (transform.forward != Vector3.forward)
-                {
-                    nextRotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
-                    moveTimer = turnTime;
-                    state = PlayerState.TURNING;
-                }
+                hopDirection = calculateHopMovement(Vector3.forward);
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.right + (Vector3.up * 0.5f), sphereCollider.radius))
-                {
-                    hopDirection = Vector3.right;
-                    state = PlayerState.HOPPING;
-                }
-                else if (transform.forward != Vector3.right)
-                {
-                    nextRotation = Quaternion.LookRotation(Vector3.right, Vector3.up);
-                    moveTimer = turnTime;
-                    state = PlayerState.TURNING;
-                }
+                hopDirection = calculateHopMovement(Vector3.right);
             }
             else if (Input.GetKeyDown(KeyCode.DownArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.back + (Vector3.up * 0.5f), sphereCollider.radius))
-                {
-                    hopDirection = Vector3.back;
-                    state = PlayerState.HOPPING;
-                }
-                else if (transform.forward != Vector3.back)
-                {
-                    nextRotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
-                    moveTimer = turnTime;
-                    state = PlayerState.TURNING;
-                }
+                hopDirection = calculateHopMovement(Vector3.back);
             }
             else if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                if (!Physics.CheckSphere(lastPosition + Vector3.left + (Vector3.up * 0.5f), sphereCollider.radius))
-                {
-                    hopDirection = Vector3.left;
-                    state = PlayerState.HOPPING;
-                }
-                else if (transform.forward != Vector3.left)
-
-                {
-                    nextRotation = Quaternion.LookRotation(Vector3.left, Vector3.up);
-                    moveTimer = turnTime;
-                    state = PlayerState.TURNING;
-                }
+                hopDirection = calculateHopMovement(Vector3.left);
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
-                if (!Physics.CheckSphere(lastPosition + (transform.forward) + (Vector3.up * 0.5f), sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + (transform.forward * 2f) + (Vector3.up * 0.5f), sphereCollider.radius))
                 {
-                    if (!Physics.CheckSphere(lastPosition + (transform.forward * 2f) + (Vector3.up * 0.5f), sphereCollider.radius))
-                    {
-                        hopDirection = transform.forward * 2f;
-                        state = PlayerState.SUPERHOPPING;
-                    }
-                    else
-                    {
-                        hopDirection = transform.forward;
-                        state = PlayerState.HOPPING;
-                    }
+                    hopDirection = transform.forward * 2f;
+                    state = PlayerState.SUPERHOPPING;
+                }
+                else
+                {
+                    hopDirection = calculateHopMovement(transform.forward);
                 }
             }
             else if (Input.GetKeyDown(KeyCode.Q))
@@ -152,7 +109,7 @@ public class PlayerFrog : MonoBehaviour
         if (hopDirection != Vector3.zero && moveTimer == 0f)
         {
             nextPosition = lastPosition + hopDirection;
-            nextRotation = Quaternion.LookRotation(hopDirection, Vector3.up);
+            nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(hopDirection, Vector3.up).eulerAngles.y, 0f);
 
             switch (state)
             {
@@ -207,8 +164,6 @@ public class PlayerFrog : MonoBehaviour
         {
             if (isFloorBelow && transform.position.y - hit.point.y < 0f)
             {
-                // transform.position = new Vector3(transform.position.x, 0.5f - (transform.position.y - hit.point.y), transform.position.z);
-                // Debug.Log(transform.position.y + "," + hit.point.y + "," + (0.5f - (transform.position.y - hit.point.y)));
                 transform.position = new Vector3(transform.position.x, hit.point.y, transform.position.z);
 
                 state = PlayerState.STANDING;
@@ -222,6 +177,40 @@ public class PlayerFrog : MonoBehaviour
                 transform.position += Vector3.up * fallVelocity * Time.deltaTime;
             }
         }
+    }
+
+    private Vector3 calculateHopMovement(Vector3 inputDirection)
+    {
+        Vector3 tempHopDirection = inputDirection;
+
+        float solidHeight = lastPosition.y;
+        RaycastHit solidHeightHit;
+        bool isSolidToJumpOn = Physics.Raycast(lastPosition + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
+
+        if (isSolidToJumpOn)
+        {
+            solidHeight = solidHeightHit.point.y;
+        }
+
+        if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
+        {
+            tempHopDirection += Vector3.up * (solidHeight - lastPosition.y);
+        }
+
+        if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius))
+        {
+            state = PlayerState.HOPPING;
+            return tempHopDirection;
+        }
+        else if (transform.forward != inputDirection)
+        {
+            nextRotation = Quaternion.LookRotation(inputDirection, Vector3.up);
+            moveTimer = turnTime;
+            state = PlayerState.TURNING;
+            return Vector3.zero;
+        }
+
+        return Vector3.zero;
     }
 
     private float GetHopHeight()
