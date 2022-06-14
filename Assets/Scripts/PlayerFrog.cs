@@ -22,6 +22,7 @@ public class PlayerFrog : MonoBehaviour
     public float superHopHeight = 0.7f;
 
     public float hopMaxStepHeight = 0.6f;
+    public float superHopMaxStepHeight = 0.3f;
 
     private float gravity = -9.8f;
     private float fallVelocity = 0f;
@@ -75,10 +76,33 @@ public class PlayerFrog : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
-                if (!Physics.CheckSphere(lastPosition + (transform.forward * 2f) + (Vector3.up * 0.5f), sphereCollider.radius))
+                Vector3 tempHopDirection = transform.forward * 2f;
+
+                float solidHeight = lastPosition.y;
+                RaycastHit solidHeightHit;
+                bool isSolidToJumpOn = Physics.Raycast(lastPosition + tempHopDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
+
+                if (isSolidToJumpOn)
                 {
-                    hopDirection = transform.forward * 2f;
-                    state = PlayerState.SUPERHOPPING;
+                    solidHeight = solidHeightHit.point.y;
+                }
+
+                if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
+                {
+                    tempHopDirection += Vector3.up * (solidHeight - lastPosition.y);
+                }
+
+                if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius))
+                {
+                    if (!Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius))
+                    {
+                        hopDirection = tempHopDirection;
+                        state = PlayerState.SUPERHOPPING;
+                    }
+                    else
+                    {
+                        hopDirection = calculateHopMovement(transform.forward);
+                    }
                 }
                 else
                 {
