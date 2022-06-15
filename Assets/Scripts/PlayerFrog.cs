@@ -92,9 +92,11 @@ public class PlayerFrog : MonoBehaviour
                     tempHopDirection += Vector3.up * (solidHeight - lastPosition.y);
                 }
 
-                if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius))
+                if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
+                 && !Physics.CheckSphere(lastPosition + (tempHopDirection / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
                 {
-                    if (!Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius))
+                    if (!Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius)
+                     && !Physics.CheckSphere(lastPosition + ((3 * tempHopDirection) / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
                     {
                         hopDirection = tempHopDirection;
                         state = PlayerState.SUPERHOPPING;
@@ -148,7 +150,7 @@ public class PlayerFrog : MonoBehaviour
             moveTimer -= Time.deltaTime;
 
             float normalizedMoveTimer = GetNormalizedMoveTimer();
-            float hopHeightCurveY = (GetHopHeight() * 4) * (-normalizedMoveTimer * normalizedMoveTimer + normalizedMoveTimer);
+            float hopHeightCurveY = GetHopHeightYAxis(normalizedMoveTimer);
 
             transform.position = Vector3.Slerp(lastPosition, nextPosition, normalizedMoveTimer);
             
@@ -221,7 +223,8 @@ public class PlayerFrog : MonoBehaviour
             tempHopDirection += Vector3.up * (solidHeight - lastPosition.y);
         }
 
-        if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius))
+        if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
+         && !Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
         {
             state = PlayerState.HOPPING;
             return tempHopDirection;
@@ -256,6 +259,11 @@ public class PlayerFrog : MonoBehaviour
             case PlayerState.TURNING: return 1 - (moveTimer / turnTime);
             default: return 0;
         }
+    }
+
+    private float GetHopHeightYAxis(float t)
+    {
+        return (GetHopHeight() * 4) * (-t * t + t);
     }
 
     public static bool IsSnapped(Vector3 vec)
