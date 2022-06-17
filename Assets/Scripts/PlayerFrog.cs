@@ -28,7 +28,7 @@ public class PlayerFrog : MonoBehaviour
     private float fallVelocity = 0f;
     private float startFallVelocity = -3f;
 
-    private PlayerState state;
+    public PlayerState state;
 
     private Vector3 lastPosition;
     private Vector3 nextPosition;
