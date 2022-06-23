@@ -78,19 +78,7 @@ public class PlayerFrog : MonoBehaviour
             {
                 Vector3 tempHopDirection = transform.forward * 2f;
 
-                float solidHeight = lastPosition.y;
-                RaycastHit solidHeightHit;
-                bool isSolidToJumpOn = Physics.Raycast(lastPosition + tempHopDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
-
-                if (isSolidToJumpOn)
-                {
-                    solidHeight = solidHeightHit.point.y;
-                }
-
-                if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
-                {
-                    tempHopDirection += Vector3.up * (solidHeight - lastPosition.y);
-                }
+                tempHopDirection += CalculateHopHeightChange(tempHopDirection);
 
                 if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
                  && !Physics.CheckSphere(lastPosition + (tempHopDirection / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
@@ -209,19 +197,7 @@ public class PlayerFrog : MonoBehaviour
     {
         Vector3 tempHopDirection = inputDirection;
 
-        float solidHeight = lastPosition.y;
-        RaycastHit solidHeightHit;
-        bool isSolidToJumpOn = Physics.Raycast(lastPosition + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
-
-        if (isSolidToJumpOn)
-        {
-            solidHeight = solidHeightHit.point.y;
-        }
-
-        if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
-        {
-            tempHopDirection += Vector3.up * (solidHeight - lastPosition.y);
-        }
+        tempHopDirection += CalculateHopHeightChange(tempHopDirection);
 
         if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
          && !Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
@@ -235,6 +211,25 @@ public class PlayerFrog : MonoBehaviour
             moveTimer = turnTime;
             state = PlayerState.TURNING;
             return Vector3.zero;
+        }
+
+        return Vector3.zero;
+    }
+
+    private Vector3 CalculateHopHeightChange(Vector3 inputDirection)
+    {
+        float solidHeight = lastPosition.y;
+        RaycastHit solidHeightHit;
+        bool isSolidToJumpOn = Physics.Raycast(lastPosition + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
+
+        if (isSolidToJumpOn)
+        {
+            solidHeight = solidHeightHit.point.y;
+        }
+
+        if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
+        {
+            return Vector3.up * (solidHeight - lastPosition.y);
         }
 
         return Vector3.zero;
