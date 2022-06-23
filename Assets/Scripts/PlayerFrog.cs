@@ -60,19 +60,19 @@ public class PlayerFrog : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.UpArrow))
             {
-                hopDirection = calculateHopMovement(Vector3.forward);
+                hopDirection = CalculateHopMovement(Vector3.forward);
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                hopDirection = calculateHopMovement(Vector3.right);
+                hopDirection = CalculateHopMovement(Vector3.right);
             }
             else if (Input.GetKeyDown(KeyCode.DownArrow))
             {
-                hopDirection = calculateHopMovement(Vector3.back);
+                hopDirection = CalculateHopMovement(Vector3.back);
             }
             else if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
-                hopDirection = calculateHopMovement(Vector3.left);
+                hopDirection = CalculateHopMovement(Vector3.left);
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
@@ -103,12 +103,12 @@ public class PlayerFrog : MonoBehaviour
                     }
                     else
                     {
-                        hopDirection = calculateHopMovement(transform.forward);
+                        hopDirection = CalculateHopMovement(transform.forward);
                     }
                 }
                 else
                 {
-                    hopDirection = calculateHopMovement(transform.forward);
+                    hopDirection = CalculateHopMovement(transform.forward);
                 }
             }
             else if (Input.GetKeyDown(KeyCode.Q))
@@ -152,7 +152,7 @@ public class PlayerFrog : MonoBehaviour
             float normalizedMoveTimer = GetNormalizedMoveTimer();
             float hopHeightCurveY = GetHopHeightYAxis(normalizedMoveTimer);
 
-            transform.position = Vector3.Slerp(lastPosition, nextPosition, normalizedMoveTimer);
+            transform.position = Vector3.Lerp(lastPosition, nextPosition, normalizedMoveTimer);
             
             if (state != PlayerState.TURNING)
             {
@@ -205,7 +205,7 @@ public class PlayerFrog : MonoBehaviour
         }
     }
 
-    private Vector3 calculateHopMovement(Vector3 inputDirection)
+    private Vector3 CalculateHopMovement(Vector3 inputDirection)
     {
         Vector3 tempHopDirection = inputDirection;
 
