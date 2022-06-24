@@ -36,15 +36,21 @@ public class PlayerFrog : MonoBehaviour
     private Quaternion lastRotation;
     private Quaternion nextRotation;
 
+    private Transform lastParent;
+    private Transform nextParent;
+
     private SphereCollider sphereCollider;
 
     void Start()
     {
-        lastPosition = transform.position;
-        nextPosition = transform.position;
+        lastPosition = transform.localPosition;
+        nextPosition = transform.localPosition;
 
         lastRotation = transform.rotation;
         nextRotation = transform.rotation;
+
+        lastParent = null;
+        nextParent = null;
 
         state = PlayerState.STANDING;
 
@@ -78,13 +84,13 @@ public class PlayerFrog : MonoBehaviour
             {
                 Vector3 tempHopDirection = transform.forward * 2f;
 
-                tempHopDirection += CalculateHopHeightChange(tempHopDirection);
+                tempHopDirection += CalculateHopHeightAndParent(tempHopDirection);
 
-                if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
-                 && !Physics.CheckSphere(lastPosition + (tempHopDirection / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
+                if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
+                 && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
                 {
-                    if (!Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius)
-                     && !Physics.CheckSphere(lastPosition + ((3 * tempHopDirection) / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
+                    if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius)
+                     && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + ((3 * tempHopDirection) / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
                     {
                         hopDirection = tempHopDirection;
                         state = PlayerState.SUPERHOPPING;
@@ -122,7 +128,7 @@ public class PlayerFrog : MonoBehaviour
         // Prepare Movement
         if (hopDirection != Vector3.zero && moveTimer == 0f)
         {
-            nextPosition = lastPosition + hopDirection;
+            nextPosition = CalculateRelativeNextPosition(hopDirection);
             nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(hopDirection, Vector3.up).eulerAngles.y, 0f);
 
             switch (state)
@@ -140,7 +146,7 @@ public class PlayerFrog : MonoBehaviour
             float normalizedMoveTimer = GetNormalizedMoveTimer();
             float hopHeightCurveY = GetHopHeightYAxis(normalizedMoveTimer);
 
-            transform.position = Vector3.Lerp(lastPosition, nextPosition, normalizedMoveTimer);
+            transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
             
             if (state != PlayerState.TURNING)
             {
@@ -155,13 +161,15 @@ public class PlayerFrog : MonoBehaviour
         {
             moveTimer = 0f;
 
-            transform.position = RoundXZ(nextPosition);
-            lastPosition = transform.position;
-            nextPosition = transform.position;
+            transform.position = CalculateWorldSpaceNextPosition();
+            lastPosition = RoundXZ(nextPosition);
+            nextPosition = RoundXZ(nextPosition);
 
             transform.rotation = nextRotation;
             lastRotation = transform.rotation;
             nextRotation = transform.rotation;
+
+            lastParent = nextParent;
 
             state = PlayerState.STANDING;
         }
@@ -186,6 +194,14 @@ public class PlayerFrog : MonoBehaviour
 
                 lastPosition = transform.position;
                 nextPosition = transform.position;
+
+                if (hit.transform.gameObject.CompareTag("Moving Platform"))
+                {
+                    lastParent = hit.transform;
+                    nextParent = hit.transform;
+
+                    transform.position = CalculateWorldSpaceNextPosition();
+                }
             }
             else
             {
@@ -199,10 +215,10 @@ public class PlayerFrog : MonoBehaviour
     {
         Vector3 tempHopDirection = inputDirection;
 
-        tempHopDirection += CalculateHopHeightChange(tempHopDirection);
+        tempHopDirection += CalculateHopHeightAndParent(tempHopDirection);
 
-        if (!Physics.CheckSphere(lastPosition + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
-         && !Physics.CheckSphere(lastPosition + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
+        if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
+         && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
         {
             state = PlayerState.HOPPING;
             return tempHopDirection;
@@ -218,15 +234,21 @@ public class PlayerFrog : MonoBehaviour
         return Vector3.zero;
     }
 
-    private Vector3 CalculateHopHeightChange(Vector3 inputDirection)
+    private Vector3 CalculateHopHeightAndParent(Vector3 inputDirection)
     {
         float solidHeight = lastPosition.y;
         RaycastHit solidHeightHit;
-        bool isSolidToJumpOn = Physics.Raycast(lastPosition + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
+        bool isSolidToJumpOn = Physics.Raycast(CalculateWorldSpaceLastPosition() + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
+        nextParent = null;
 
         if (isSolidToJumpOn)
         {
             solidHeight = solidHeightHit.point.y;
+
+            if (solidHeightHit.transform.gameObject.CompareTag("Moving Platform"))
+            {
+                nextParent = solidHeightHit.transform;
+            }
         }
 
         if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
@@ -235,6 +257,50 @@ public class PlayerFrog : MonoBehaviour
         }
 
         return Vector3.zero;
+    }
+
+    private Vector3 CalculateRelativeNextPosition(Vector3 hopDirection)
+    {
+        if (lastParent != null && nextParent != null)
+        {
+            return nextParent.InverseTransformPoint(lastParent.TransformPoint(lastPosition) + hopDirection);
+        }
+        else if (lastParent == null && nextParent != null)
+        {
+            return nextParent.InverseTransformPoint(lastPosition + hopDirection);
+        }
+        else if (lastParent != null && nextParent == null)
+        {
+            return lastParent.TransformPoint(lastPosition) + hopDirection;
+        }
+        else
+        {
+            return lastPosition + hopDirection;
+        }
+    }
+
+    private Vector3 CalculateWorldSpaceLastPosition()
+    {
+        if (lastParent != null)
+        {
+            return lastParent.position + lastPosition;
+        }
+        else
+        {
+            return lastPosition;
+        }
+    }
+
+    private Vector3 CalculateWorldSpaceNextPosition()
+    {
+        if (nextParent != null)
+        {
+            return nextParent.position + nextPosition;
+        }
+        else
+        {
+            return nextPosition;
+        }
     }
 
     private float GetHopHeight()
