@@ -157,9 +157,11 @@ public class PlayerFrog : MonoBehaviour
 
             transform.position = RoundXZ(nextPosition);
             lastPosition = transform.position;
+            nextPosition = transform.position;
 
             transform.rotation = nextRotation;
             lastRotation = transform.rotation;
+            nextRotation = transform.rotation;
 
             state = PlayerState.STANDING;
         }
