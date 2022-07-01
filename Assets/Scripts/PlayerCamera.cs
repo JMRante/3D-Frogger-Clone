@@ -27,8 +27,8 @@ public class PlayerCamera : MonoBehaviour
             switch (player.state)
             {
                 case PlayerState.FALLING: verticalMoveDenom = 0.2f; break;
-                case PlayerState.HOPPING: verticalMoveDenom = 1f; break;
-                case PlayerState.SUPERHOPPING: verticalMoveDenom = 2f; break;
+                case PlayerState.HOPPING: verticalMoveDenom = 3f; break;
+                case PlayerState.SUPERHOPPING: verticalMoveDenom = 3f; break;
             }
 
             float distanceToTargetPosition = (targetOffsetPosition - transform.position).magnitude;

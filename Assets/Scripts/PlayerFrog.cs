@@ -8,7 +8,8 @@ public enum PlayerState
     HOPPING,
     SUPERHOPPING,
     TURNING,
-    FALLING
+    FALLING,
+    SMOOTHSNAPPING
 }
 
 public class PlayerFrog : MonoBehaviour
@@ -23,6 +24,8 @@ public class PlayerFrog : MonoBehaviour
 
     public float hopMaxStepHeight = 0.6f;
     public float superHopMaxStepHeight = 0.3f;
+
+    public float smoothSnapTime = 0.05f;
 
     private float gravity = -9.8f;
     private float fallVelocity = 0f;
@@ -141,19 +144,30 @@ public class PlayerFrog : MonoBehaviour
         // Movement
         if (moveTimer > 0f)
         {
-            moveTimer -= Time.deltaTime;
+            // if (state == PlayerState.SMOOTHSNAPPING)
+            // {
+            //     moveTimer -= Time.deltaTime;
 
-            float normalizedMoveTimer = GetNormalizedMoveTimer();
-            float hopHeightCurveY = GetHopHeightYAxis(normalizedMoveTimer);
+            //     float normalizedMoveTimer = GetNormalizedMoveTimer();
 
-            transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
-            
-            if (state != PlayerState.TURNING)
+            //     transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
+            // }
+            // else
             {
-                transform.position += (Vector3.up * hopHeightCurveY);
-            }
+                moveTimer -= Time.deltaTime;
 
-            transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedMoveTimer);
+                float normalizedMoveTimer = GetNormalizedMoveTimer();
+                float hopHeightCurveY = GetHopHeightYAxis(normalizedMoveTimer);
+
+                transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
+
+                if (state != PlayerState.TURNING)
+                {
+                    transform.position += (Vector3.up * hopHeightCurveY);
+                }
+
+                transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedMoveTimer);
+            }
         }
 
         // Stop Moving
@@ -162,8 +176,6 @@ public class PlayerFrog : MonoBehaviour
             moveTimer = 0f;
 
             transform.position = CalculateWorldSpaceNextPosition();
-            lastPosition = RoundXZ(nextPosition);
-            nextPosition = RoundXZ(nextPosition);
 
             transform.rotation = nextRotation;
             lastRotation = transform.rotation;
@@ -171,7 +183,20 @@ public class PlayerFrog : MonoBehaviour
 
             lastParent = nextParent;
 
-            state = PlayerState.STANDING;
+            // if (transform.position != RoundXZ(transform.position))
+            // {
+            //     lastPosition = transform.position;
+            //     nextPosition = RoundXZ(nextPosition);
+            //     state = PlayerState.SMOOTHSNAPPING;
+
+            //     moveTimer = smoothSnapTime;
+            // }
+            // else
+            {
+                lastPosition = RoundXZ(nextPosition);
+                nextPosition = RoundXZ(nextPosition);
+                state = PlayerState.STANDING;
+            }
         }
 
         // Falling
@@ -263,19 +288,19 @@ public class PlayerFrog : MonoBehaviour
     {
         if (lastParent != null && nextParent != null)
         {
-            return nextParent.InverseTransformPoint(lastParent.TransformPoint(lastPosition) + hopDirection);
+            return RoundXZ(nextParent.InverseTransformPoint(lastParent.TransformPoint(lastPosition) + hopDirection));
         }
         else if (lastParent == null && nextParent != null)
         {
-            return nextParent.InverseTransformPoint(lastPosition + hopDirection);
+            return RoundXZ(nextParent.InverseTransformPoint(lastPosition + hopDirection));
         }
         else if (lastParent != null && nextParent == null)
         {
-            return lastParent.TransformPoint(lastPosition) + hopDirection;
+            return RoundXZ(lastParent.TransformPoint(lastPosition) + hopDirection);
         }
         else
         {
-            return lastPosition + hopDirection;
+            return RoundXZ(lastPosition + hopDirection);
         }
     }
 
@@ -320,6 +345,7 @@ public class PlayerFrog : MonoBehaviour
             case PlayerState.HOPPING: return 1 - (moveTimer / hopTime);
             case PlayerState.SUPERHOPPING: return 1 - (moveTimer / superHopTime);
             case PlayerState.TURNING: return 1 - (moveTimer / turnTime);
+            case PlayerState.SMOOTHSNAPPING: return 1 - (moveTimer / smoothSnapTime);
             default: return 0;
         }
     }
