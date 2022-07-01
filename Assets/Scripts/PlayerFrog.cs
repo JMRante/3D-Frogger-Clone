@@ -250,11 +250,15 @@ public class PlayerFrog : MonoBehaviour
         }
         else if (transform.forward != inputDirection)
         {
+            nextParent = lastParent;
+
             nextRotation = Quaternion.LookRotation(inputDirection, Vector3.up);
             moveTimer = turnTime;
             state = PlayerState.TURNING;
             return Vector3.zero;
         }
+
+        nextParent = lastParent;
 
         return Vector3.zero;
     }
