@@ -1,0 +1,7 @@
+TODO
+----
+_ Falling on to moving platforms smooth snaps player to moving platform grid
+_ If at end of player's hop a moving platform is below them, smooth snap them to that moving platform
+* Player on moving platform doesn't properly hop up to ledges
+_ Moving platforms that are at same height as player should push them to hop
+_ Moving platforms taht are at same height as player but are deadly should kill them

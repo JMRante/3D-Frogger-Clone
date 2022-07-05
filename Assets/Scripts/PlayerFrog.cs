@@ -265,7 +265,7 @@ public class PlayerFrog : MonoBehaviour
 
     private Vector3 CalculateHopHeightAndParent(Vector3 inputDirection)
     {
-        float solidHeight = lastPosition.y;
+        float solidHeight = CalculateWorldSpaceLastPosition().y;
         RaycastHit solidHeightHit;
         bool isSolidToJumpOn = Physics.Raycast(CalculateWorldSpaceLastPosition() + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
         nextParent = null;
@@ -280,9 +280,9 @@ public class PlayerFrog : MonoBehaviour
             }
         }
 
-        if (Mathf.Abs(solidHeight - lastPosition.y) <= hopMaxStepHeight)
+        if (Mathf.Abs(solidHeight - CalculateWorldSpaceLastPosition().y) <= hopMaxStepHeight)
         {
-            return Vector3.up * (solidHeight - lastPosition.y);
+            return Vector3.up * (solidHeight - CalculateWorldSpaceLastPosition().y);
         }
 
         return Vector3.zero;
