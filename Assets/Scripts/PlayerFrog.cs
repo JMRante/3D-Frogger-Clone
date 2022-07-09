@@ -202,10 +202,21 @@ public class PlayerFrog : MonoBehaviour
         RaycastHit hit;
         bool isFloorBelow = Physics.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, out hit, 0.4f, xzHopThroughAndSolidLayer);
 
-        if (state == PlayerState.STANDING && !isFloorBelow)
+        if (state == PlayerState.STANDING)
         {
-            fallVelocity = startFallVelocity;
-            state = PlayerState.FALLING;
+            if (!isFloorBelow)
+            {
+                fallVelocity = startFallVelocity;
+                state = PlayerState.FALLING;
+            }
+            else
+            {
+                if (hit.transform.gameObject.CompareTag("Moving Platform") && lastParent == null)
+                {
+                    Vector3 hitPosition = new Vector3(transform.position.x, hit.point.y, transform.position.z);
+                    AdjustPlayerOnMovingPlatform(hit, hitPosition);
+                }
+            }
         }
 
         if (state == PlayerState.FALLING)
@@ -216,27 +227,7 @@ public class PlayerFrog : MonoBehaviour
 
                 if (hit.transform.gameObject.CompareTag("Moving Platform"))
                 {
-                    lastParent = hit.transform;
-                    nextParent = hit.transform;
-
-                    lastPosition = CalculateLocalSpaceLastPosition(hitPosition);
-                    nextPosition = RoundXZ(CalculateLocalSpaceNextPosition(hitPosition));
-
-                    if (lastPosition != nextPosition)
-                    {
-                        state = PlayerState.SMOOTHSNAPPING;
-
-                        moveTimer = smoothSnapTime;
-                    }
-                    else
-                    {
-                        transform.position = hitPosition;
-
-                        state = PlayerState.STANDING;
-
-                        lastPosition = RoundXZ(nextPosition);
-                        nextPosition = RoundXZ(nextPosition);
-                    }
+                    AdjustPlayerOnMovingPlatform(hit, hitPosition);
                 }
                 else
                 {
@@ -407,6 +398,31 @@ public class PlayerFrog : MonoBehaviour
         else
         {
             return nextPosition;
+        }
+    }
+
+    private void AdjustPlayerOnMovingPlatform(RaycastHit hit, Vector3 hitPosition)
+    {
+        lastParent = hit.transform;
+        nextParent = hit.transform;
+
+        lastPosition = CalculateLocalSpaceLastPosition(hitPosition);
+        nextPosition = RoundXZ(CalculateLocalSpaceNextPosition(hitPosition));
+
+        if (lastPosition != nextPosition)
+        {
+            state = PlayerState.SMOOTHSNAPPING;
+
+            moveTimer = smoothSnapTime;
+        }
+        else
+        {
+            transform.position = hitPosition;
+
+            state = PlayerState.STANDING;
+
+            lastPosition = RoundXZ(nextPosition);
+            nextPosition = RoundXZ(nextPosition);
         }
     }
 
