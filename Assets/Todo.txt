@@ -1,6 +1,40 @@
 TODO
 ----
-* Falling on to moving platforms smooth snaps player to moving platform grid
-? If at end of player's hop a moving platform is below them, smooth snap them to that moving platform
-* Player on moving platform doesn't properly hop up to ledges
-* Moving platforms that are at same height as player should kill them, some player cannot hop into, some they can
+
+Bugs
+    _ Player hopping up onto fast moving platform will die
+
+Fundamentals
+    * Falling on to moving platforms smooth snaps player to moving platform grid
+    ? If at end of player's hop a moving platform is below them, smooth snap them to that moving platform
+    * Player on moving platform doesn't properly hop up to ledges
+    * Moving platforms that are at same height as player should kill them, some player cannot hop into, some they can
+
+Level Editor
+    * Set up level editor asset
+    _ Explore tile complexity for basic tiles
+    _ Explore art style
+    _ Explore script and config for adjusting generated enemies and moving platforms
+
+Fun Check
+
+
+Animate and Sound Out Player
+
+
+Add Hard Elements
+
+
+Add Easy Elements
+
+
+Design More Levels, Fun Check
+
+
+Create Art for Vertical Slice
+
+
+Design Vertical Slice
+
+
+Full Production

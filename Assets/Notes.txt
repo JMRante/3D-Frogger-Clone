@@ -13,6 +13,19 @@ General Design Ideas
 * Player must release input in order to hop, holding just preps them (like in Crossy Road). Allows for last minute hesitations
 * Theme of nature vs technology. Animal versus the hazards of mechanization
 * No deadly obstacles in the game are intending to kill the player, they are simply going about their business
+* The player should never have to wait more than 1 second for an enemy that moves slow than them to get out of their way
+* The player should never have to wait more than 2 seconds for a moving platform to come to them
+
+
+World Building Ideas
+--------------------
+* All machinery in the game comes from M.A.I.M. Co (Machine Automated Industrial Manufacturing Company)
+
+
+Potential Titles
+----------------
+* Hop Club
+* Hop Squad
 
 
 Implementation Spec Notes
@@ -41,7 +54,7 @@ Fundamental Gameplay Elements
     - Electric/spike floor
     - Train
 * Falling tiles
-* Slippery floors
+* !Slippery floors
     - Ice
     - Oil
     - Slime
@@ -50,23 +63,23 @@ Fundamental Gameplay Elements
     - Turn on/off moving platforms
     - Open/close gates
     - Wall buttons that can only be pressed by tongue
-* Bouncy pads
+* !Bouncy pads
     - Play can control direction mid-air on landing
-* Tongue hooks (cross two tiles)
+* !Tongue hooks (cross two tiles)
     - Horizontal tongue hooks coming out of wall
 * Power-up Bugs
     - Fireflys make player glow in dark
     - Crickets make player super hop three tiles
     - Horned beetles make player able to destroy certain obstacles they touch (invinciablity)
-    - Spiders allow player to hop on side of certain walls
+    - !Spiders allow player to hop on side of certain walls
     - Water striders allow the player to hop on water
     - Fast bug (not decided yet) that makes player hop faster
 * Collectables
     - Baby frogs (Required)
     - Flies (Optional)
-* Conveyors
+* !Conveyors
     - Act almost as stationary moving platforms
-* Slopes
+* !Slopes
     - 45-60 degree slopes the player slides down
 * Timed on/off platforms
 * Expanding, flooding deadly obstacles
@@ -79,3 +92,4 @@ Fundamental Gameplay Elements
     - Player can, and must, superhop over them
 * Tiles that make player auto-hop (Pac-Man/Snake like movement)
 * Tiles that make player hop 1 extra tile than normal for their movement
+* Teleporters
