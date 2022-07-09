@@ -15,31 +15,34 @@ public class PlayerCamera : MonoBehaviour
 
     void Update()
     {
-        Vector3 targetOffsetPosition = player.transform.position + offsetFromPlayer;
-
-        if (transform.position != targetOffsetPosition)
+        if (player != null)
         {
-            Vector3 directionTowardsPlayer = targetOffsetPosition - transform.position;
-            directionTowardsPlayer.Normalize();
+            Vector3 targetOffsetPosition = player.transform.position + offsetFromPlayer;
 
-            float verticalMoveDenom = 2f;
-
-            switch (player.state)
+            if (transform.position != targetOffsetPosition)
             {
-                case PlayerState.FALLING: verticalMoveDenom = 0.2f; break;
-                case PlayerState.HOPPING: verticalMoveDenom = 3f; break;
-                case PlayerState.SUPERHOPPING: verticalMoveDenom = 3f; break;
-            }
+                Vector3 directionTowardsPlayer = targetOffsetPosition - transform.position;
+                directionTowardsPlayer.Normalize();
 
-            float distanceToTargetPosition = (targetOffsetPosition - transform.position).magnitude;
-            transform.position += new Vector3(
-                directionTowardsPlayer.x * (distanceToTargetPosition / 0.3f),
-                directionTowardsPlayer.y * (distanceToTargetPosition / verticalMoveDenom),
-                directionTowardsPlayer.z * (distanceToTargetPosition / 0.3f)) * Time.deltaTime;
+                float verticalMoveDenom = 2f;
 
-            if ((targetOffsetPosition - transform.position).magnitude < 0.01f)
-            {
-                transform.position = targetOffsetPosition;
+                switch (player.state)
+                {
+                    case PlayerState.FALLING: verticalMoveDenom = 0.2f; break;
+                    case PlayerState.HOPPING: verticalMoveDenom = 3f; break;
+                    case PlayerState.SUPERHOPPING: verticalMoveDenom = 3f; break;
+                }
+
+                float distanceToTargetPosition = (targetOffsetPosition - transform.position).magnitude;
+                transform.position += new Vector3(
+                    directionTowardsPlayer.x * (distanceToTargetPosition / 0.3f),
+                    directionTowardsPlayer.y * (distanceToTargetPosition / verticalMoveDenom),
+                    directionTowardsPlayer.z * (distanceToTargetPosition / 0.3f)) * Time.deltaTime;
+
+                if ((targetOffsetPosition - transform.position).magnitude < 0.01f)
+                {
+                    transform.position = targetOffsetPosition;
+                }
             }
         }
     }

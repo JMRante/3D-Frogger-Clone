@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5943571638631614356}
   - component: {fileID: 8475556399528129374}
   - component: {fileID: 7088291988135161796}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: TestBumpy
   m_TagString: Untagged
   m_Icon: {fileID: 0}

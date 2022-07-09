@@ -44,6 +44,12 @@ public class PlayerFrog : MonoBehaviour
 
     private SphereCollider sphereCollider;
 
+    private bool isDead = false;
+
+    private int solidLayer;
+    private int xzHopThroughAndSolidLayer;
+    private int allSolidLayers;
+
     void Start()
     {
         lastPosition = transform.localPosition;
@@ -58,6 +64,10 @@ public class PlayerFrog : MonoBehaviour
         state = PlayerState.STANDING;
 
         sphereCollider = GetComponent<SphereCollider>();
+
+        solidLayer = LayerMask.GetMask("Solid");
+        xzHopThroughAndSolidLayer = LayerMask.GetMask("Solid", "XZHopThrough");
+        allSolidLayers = LayerMask.GetMask("Solid", "XZHopThrough", "XYZHopThrough");
     }
 
     void Update()
@@ -89,11 +99,11 @@ public class PlayerFrog : MonoBehaviour
 
                 tempHopDirection += CalculateHopHeightAndParent(tempHopDirection);
 
-                if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
-                 && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
+                if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius, solidLayer)
+                 && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius, solidLayer))
                 {
-                    if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius)
-                     && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + ((3 * tempHopDirection) / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
+                    if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * 0.5f), sphereCollider.radius, solidLayer)
+                     && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + ((3 * tempHopDirection) / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius, solidLayer))
                     {
                         hopDirection = tempHopDirection;
                         state = PlayerState.SUPERHOPPING;
@@ -131,7 +141,7 @@ public class PlayerFrog : MonoBehaviour
         // Prepare Movement
         if (hopDirection != Vector3.zero && moveTimer == 0f)
         {
-            nextPosition = CalculateRelativeNextPosition(hopDirection);
+            nextPosition = CalculateLocalSpaceNextPositionByDirection(hopDirection);
             nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(hopDirection, Vector3.up).eulerAngles.y, 0f);
 
             switch (state)
@@ -144,15 +154,15 @@ public class PlayerFrog : MonoBehaviour
         // Movement
         if (moveTimer > 0f)
         {
-            // if (state == PlayerState.SMOOTHSNAPPING)
-            // {
-            //     moveTimer -= Time.deltaTime;
+            if (state == PlayerState.SMOOTHSNAPPING)
+            {
+                moveTimer -= Time.deltaTime;
 
-            //     float normalizedMoveTimer = GetNormalizedMoveTimer();
+                float normalizedMoveTimer = GetNormalizedMoveTimer();
 
-            //     transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
-            // }
-            // else
+                transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
+            }
+            else
             {
                 moveTimer -= Time.deltaTime;
 
@@ -183,25 +193,14 @@ public class PlayerFrog : MonoBehaviour
 
             lastParent = nextParent;
 
-            // if (transform.position != RoundXZ(transform.position))
-            // {
-            //     lastPosition = transform.position;
-            //     nextPosition = RoundXZ(nextPosition);
-            //     state = PlayerState.SMOOTHSNAPPING;
-
-            //     moveTimer = smoothSnapTime;
-            // }
-            // else
-            {
-                lastPosition = RoundXZ(nextPosition);
-                nextPosition = RoundXZ(nextPosition);
-                state = PlayerState.STANDING;
-            }
+            lastPosition = RoundXZ(nextPosition);
+            nextPosition = RoundXZ(nextPosition);
+            state = PlayerState.STANDING;
         }
 
         // Falling
         RaycastHit hit;
-        bool isFloorBelow = Physics.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, out hit, 0.4f);
+        bool isFloorBelow = Physics.Raycast(transform.position + (Vector3.up * 0.1f), Vector3.down, out hit, 0.4f, xzHopThroughAndSolidLayer);
 
         if (state == PlayerState.STANDING && !isFloorBelow)
         {
@@ -213,25 +212,56 @@ public class PlayerFrog : MonoBehaviour
         {
             if (isFloorBelow && transform.position.y - hit.point.y < 0f)
             {
-                transform.position = new Vector3(transform.position.x, hit.point.y, transform.position.z);
-
-                state = PlayerState.STANDING;
-
-                lastPosition = transform.position;
-                nextPosition = transform.position;
+                Vector3 hitPosition = new Vector3(transform.position.x, hit.point.y, transform.position.z);
 
                 if (hit.transform.gameObject.CompareTag("Moving Platform"))
                 {
                     lastParent = hit.transform;
                     nextParent = hit.transform;
 
-                    transform.position = CalculateWorldSpaceNextPosition();
+                    lastPosition = CalculateLocalSpaceLastPosition(hitPosition);
+                    nextPosition = RoundXZ(CalculateLocalSpaceNextPosition(hitPosition));
+
+                    if (lastPosition != nextPosition)
+                    {
+                        state = PlayerState.SMOOTHSNAPPING;
+
+                        moveTimer = smoothSnapTime;
+                    }
+                    else
+                    {
+                        transform.position = hitPosition;
+
+                        state = PlayerState.STANDING;
+
+                        lastPosition = RoundXZ(nextPosition);
+                        nextPosition = RoundXZ(nextPosition);
+                    }
+                }
+                else
+                {
+                    transform.position = hitPosition;
+
+                    state = PlayerState.STANDING;
+
+                    nextPosition = RoundXZ(hitPosition);
+                    lastPosition = nextPosition;
                 }
             }
             else
             {
                 fallVelocity += gravity * Time.deltaTime;
                 transform.position += Vector3.up * fallVelocity * Time.deltaTime;
+            }
+        }
+
+        // Die
+        Collider[] hitColliders = Physics.OverlapSphere(sphereCollider.center + transform.position, sphereCollider.radius, allSolidLayers);
+        foreach (Collider hitCollider in hitColliders)
+        {
+            if (hitCollider != sphereCollider)
+            {
+                Die();
             }
         }
     }
@@ -242,8 +272,8 @@ public class PlayerFrog : MonoBehaviour
 
         tempHopDirection += CalculateHopHeightAndParent(tempHopDirection);
 
-        if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius)
-         && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius))
+        if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius, solidLayer)
+         && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius, solidLayer))
         {
             state = PlayerState.HOPPING;
             return tempHopDirection;
@@ -267,7 +297,7 @@ public class PlayerFrog : MonoBehaviour
     {
         float solidHeight = CalculateWorldSpaceLastPosition().y;
         RaycastHit solidHeightHit;
-        bool isSolidToJumpOn = Physics.Raycast(CalculateWorldSpaceLastPosition() + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f);
+        bool isSolidToJumpOn = Physics.Raycast(CalculateWorldSpaceLastPosition() + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f, xzHopThroughAndSolidLayer);
         nextParent = null;
 
         if (isSolidToJumpOn)
@@ -288,7 +318,7 @@ public class PlayerFrog : MonoBehaviour
         return Vector3.zero;
     }
 
-    private Vector3 CalculateRelativeNextPosition(Vector3 hopDirection)
+    private Vector3 CalculateLocalSpaceNextPositionByDirection(Vector3 hopDirection)
     {
         if (lastParent != null && nextParent != null)
         {
@@ -305,6 +335,54 @@ public class PlayerFrog : MonoBehaviour
         else
         {
             return RoundXZ(lastPosition + hopDirection);
+        }
+    }
+
+    public Vector3 CalculateLocalSpaceLastPosition()
+    {
+        if (lastParent != null)
+        {
+            return lastParent.InverseTransformPoint(lastPosition);
+        }
+        else
+        {
+            return lastPosition;
+        }
+    }
+
+    public Vector3 CalculateLocalSpaceNextPosition()
+    {
+        if (nextParent != null)
+        {
+            return nextParent.InverseTransformPoint(nextPosition);
+        }
+        else
+        {
+            return nextPosition;
+        }
+    }
+
+    public Vector3 CalculateLocalSpaceLastPosition(Vector3 position)
+    {
+        if (lastParent != null)
+        {
+            return lastParent.InverseTransformPoint(position);
+        }
+        else
+        {
+            return lastPosition;
+        }
+    }
+
+    public Vector3 CalculateLocalSpaceNextPosition(Vector3 position)
+    {
+        if (nextParent != null)
+        {
+            return nextParent.InverseTransformPoint(position);
+        }
+        else
+        {
+            return nextPosition;
         }
     }
 
@@ -351,6 +429,15 @@ public class PlayerFrog : MonoBehaviour
             case PlayerState.TURNING: return 1 - (moveTimer / turnTime);
             case PlayerState.SMOOTHSNAPPING: return 1 - (moveTimer / smoothSnapTime);
             default: return 0;
+        }
+    }
+
+    private void Die()
+    {
+        if (!isDead)
+        {
+            Destroy(gameObject);
+            isDead = true;
         }
     }
 

@@ -14,6 +14,11 @@ General Design Ideas
 * Theme of nature vs technology. Animal versus the hazards of mechanization
 
 
+Implementation Spec Notes
+-------------------------
+Layers: Solid, XZHopThrough, XYZHopThrough
+
+
 Fundamental Gameplay Elements
 -----------------------------
 * Deadly Obstacles
@@ -53,6 +58,7 @@ Fundamental Gameplay Elements
     - Horned beetles make player able to destroy certain obstacles they touch (invinciablity)
     - Spiders allow player to hop on side of certain walls
     - Water striders allow the player to hop on water
+    - Fast bug (not decided yet) that makes player hop faster
 * Collectables
     - Baby frogs (Required)
     - Flies (Optional)
@@ -60,3 +66,14 @@ Fundamental Gameplay Elements
     - Act almost as stationary moving platforms
 * Slopes
     - 45-60 degree slopes the player slides down
+* Timed on/off platforms
+* Expanding, flooding deadly obstacles
+    - Briars?
+* Q-Bert tiles
+    - Need to flip all colors, when touched toggle
+* Sticky floors
+    - Cannot super hop off, move slightly slower? (might feel terrible)
+* Short moving obstacles
+    - Player can, and must, superhop over them
+* Tiles that make player auto-hop (Pac-Man/Snake like movement)
+* Tiles that make player hop 1 extra tile than normal for their movement
