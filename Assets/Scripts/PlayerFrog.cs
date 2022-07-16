@@ -23,7 +23,7 @@ public class PlayerFrog : MonoBehaviour
     public float superHopHeight = 0.7f;
 
     public float hopMaxStepHeight = 0.6f;
-    public float superHopMaxStepHeight = 0.3f;
+    // public float superHopMaxStepHeight = 0.3f;
 
     public float smoothSnapTime = 0.05f;
 
