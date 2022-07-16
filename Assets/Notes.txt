@@ -93,3 +93,9 @@ Fundamental Gameplay Elements
 * Tiles that make player auto-hop (Pac-Man/Snake like movement)
 * Tiles that make player hop 1 extra tile than normal for their movement
 * Teleporters
+
+
+Level Editor Tools
+------------------
+* Tool for placing generators of obstacles and platforms that pools them, prepopulates them, and shows rate via prepopulation in editor
+* 
