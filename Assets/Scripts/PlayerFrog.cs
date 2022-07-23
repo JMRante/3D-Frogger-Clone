@@ -274,6 +274,13 @@ public class PlayerFrog : MonoBehaviour
 
                     nextPosition = RoundXZ(hitPosition);
                     lastPosition = nextPosition;
+
+                    nextNormal = hit.normal;
+                    lastNormal = nextNormal;
+
+                    Vector3 nextRight = Vector3.Cross(transform.forward, Vector3.up);
+                    Vector3 nextForward = Vector3.Cross(nextNormal, nextRight);
+                    nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextForward, nextNormal);
                 }
             }
             else
@@ -464,6 +471,13 @@ public class PlayerFrog : MonoBehaviour
             lastPosition = RoundXZ(nextPosition);
             nextPosition = RoundXZ(nextPosition);
         }
+
+        nextNormal = hit.normal;
+        lastNormal = nextNormal;
+
+        Vector3 nextRight = Vector3.Cross(transform.forward, Vector3.up);
+        Vector3 nextForward = Vector3.Cross(nextNormal, nextRight);
+        nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextForward, nextNormal);
     }
 
     private float GetHopHeight()
