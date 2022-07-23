@@ -76,11 +76,11 @@ Fundamental Gameplay Elements
     - Fast bug (not decided yet) that makes player hop faster
 * Collectables
     - Baby frogs (Required)
-    - Flies (Optional)
+    - Butterflies (Optional)
 * !Conveyors
     - Act almost as stationary moving platforms
 * !Slopes
-    - 45-60 degree slopes the player slides down
+    - 45-60 degree slopes the player is forced to hop down
 * Timed on/off platforms
 * Expanding, flooding deadly obstacles
     - Briars?

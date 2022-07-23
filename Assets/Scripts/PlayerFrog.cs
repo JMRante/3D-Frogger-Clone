@@ -33,11 +33,19 @@ public class PlayerFrog : MonoBehaviour
 
     public PlayerState state;
 
+    public Transform modelTransform;
+
     private Vector3 lastPosition;
     private Vector3 nextPosition;
 
     private Quaternion lastRotation;
     private Quaternion nextRotation;
+
+    private Quaternion lastModelRotation;
+    private Quaternion nextModelRotation;
+
+    private Vector3 lastNormal;
+    private Vector3 nextNormal;
 
     private Transform lastParent;
     private Transform nextParent;
@@ -57,6 +65,12 @@ public class PlayerFrog : MonoBehaviour
 
         lastRotation = transform.rotation;
         nextRotation = transform.rotation;
+
+        lastModelRotation = modelTransform.localRotation;
+        nextModelRotation = modelTransform.localRotation;
+
+        lastNormal = Vector3.up;
+        nextNormal = Vector3.up;
 
         lastParent = null;
         nextParent = null;
@@ -123,6 +137,12 @@ public class PlayerFrog : MonoBehaviour
                 if (moveTimer == 0f)
                 {
                     nextRotation = transform.rotation * Quaternion.AngleAxis(-90f, Vector3.up);
+
+                    Vector3 nextForward = Quaternion.AngleAxis(-90f, Vector3.up) * transform.forward;
+                    Vector3 nextRight = Vector3.Cross(nextForward, Vector3.up);
+                    Vector3 nextModelForward = Vector3.Cross(nextNormal, nextRight);
+                    nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextModelForward, lastNormal);
+
                     moveTimer = turnTime;
                     state = PlayerState.TURNING;
                 }
@@ -132,6 +152,12 @@ public class PlayerFrog : MonoBehaviour
                 if (moveTimer == 0f)
                 {
                     nextRotation = transform.rotation * Quaternion.AngleAxis(90f, Vector3.up);
+
+                    Vector3 nextForward = Quaternion.AngleAxis(90f, Vector3.up) * transform.forward;
+                    Vector3 nextRight = Vector3.Cross(nextForward, Vector3.up);
+                    Vector3 nextModelForward = Vector3.Cross(nextNormal, nextRight);
+                    nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextModelForward, lastNormal);
+
                     moveTimer = turnTime;
                     state = PlayerState.TURNING;
                 }
@@ -143,6 +169,10 @@ public class PlayerFrog : MonoBehaviour
         {
             nextPosition = CalculateLocalSpaceNextPositionByDirection(hopDirection);
             nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(hopDirection, Vector3.up).eulerAngles.y, 0f);
+
+            Vector3 nextRight = Vector3.Cross(hopDirection, Vector3.up);
+            Vector3 nextForward = Vector3.Cross(nextNormal, nextRight);
+            nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextForward, nextNormal);
 
             switch (state)
             {
@@ -177,6 +207,7 @@ public class PlayerFrog : MonoBehaviour
                 }
 
                 transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedMoveTimer);
+                modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, nextModelRotation, normalizedMoveTimer);
             }
         }
 
@@ -190,6 +221,12 @@ public class PlayerFrog : MonoBehaviour
             transform.rotation = nextRotation;
             lastRotation = transform.rotation;
             nextRotation = transform.rotation;
+
+            modelTransform.localRotation = nextModelRotation;
+            lastModelRotation = modelTransform.localRotation;
+            nextModelRotation = modelTransform.localRotation;
+
+            lastNormal = nextNormal;
 
             lastParent = nextParent;
 
@@ -290,6 +327,7 @@ public class PlayerFrog : MonoBehaviour
         RaycastHit solidHeightHit;
         bool isSolidToJumpOn = Physics.Raycast(CalculateWorldSpaceLastPosition() + inputDirection + (Vector3.up * 1.1f), Vector3.down, out solidHeightHit, 2f, xzHopThroughAndSolidLayer);
         nextParent = null;
+        nextNormal = Vector3.up;
 
         if (isSolidToJumpOn)
         {
@@ -299,6 +337,8 @@ public class PlayerFrog : MonoBehaviour
             {
                 nextParent = solidHeightHit.transform;
             }
+
+            nextNormal = solidHeightHit.normal;
         }
 
         if (Mathf.Abs(solidHeight - CalculateWorldSpaceLastPosition().y) <= hopMaxStepHeight)
