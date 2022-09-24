@@ -5492,13 +5492,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ddd279fc988a3a4b981b381da461ed6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hopTime: 0.1
-  superHopTime: 0.2
+  hopTime: 0.125
+  superHopTime: 0.4
   turnTime: 0.05
   hopHeight: 0.7
-  superHopHeight: 0.9
+  superHopHeight: 1.2
   hopMaxStepHeight: 0.6
   smoothSnapTime: 0.05
+  hopScaleDistort: {x: 0.7, y: 1.5, z: 0.7}
   state: 0
   modelTransform: {fileID: 1088999792}
 --- !u!135 &836555223

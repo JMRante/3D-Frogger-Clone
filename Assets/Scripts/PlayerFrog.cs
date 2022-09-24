@@ -31,6 +31,8 @@ public class PlayerFrog : MonoBehaviour
     private float fallVelocity = 0f;
     private float startFallVelocity = -3f;
 
+    public Vector3 hopScaleDistort = new Vector3(0.7f, 1.5f, 0.7f);
+
     public PlayerState state;
 
     public Transform modelTransform;
@@ -205,6 +207,8 @@ public class PlayerFrog : MonoBehaviour
                 {
                     transform.position += (Vector3.up * hopHeightCurveY);
                 }
+
+                modelTransform.localScale = new Vector3(SmoothStepToAndBack(1f, hopScaleDistort.x, normalizedMoveTimer), SmoothStepToAndBack(1f, hopScaleDistort.y, normalizedMoveTimer), SmoothStepToAndBack(1f, hopScaleDistort.z, normalizedMoveTimer));
 
                 transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedMoveTimer);
                 modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, nextModelRotation, normalizedMoveTimer);
@@ -514,6 +518,17 @@ public class PlayerFrog : MonoBehaviour
     private float GetHopHeightYAxis(float t)
     {
         return (GetHopHeight() * 4) * (-t * t + t);
+    }
+
+    private float SmoothStepToAndBack(float from, float to, float t) 
+    {
+        float adjustedTo = ((to - from) * 2f) + from;
+
+        if (t < 0.5f) {
+            return Mathf.SmoothStep(from, adjustedTo, t);
+        } else {
+            return Mathf.SmoothStep(adjustedTo, from, t);
+        }
     }
 
     public static bool IsSnapped(Vector3 vec)
