@@ -5,6 +5,8 @@ using UnityEngine;
 public enum PlayerState
 {
     STANDING,
+    PREPPING,
+    SUPERPREPPING,
     HOPPING,
     SUPERHOPPING,
     TURNING,
@@ -16,8 +18,10 @@ public class PlayerFrog : MonoBehaviour
 {
     public float hopTime = 0.1f;
     public float superHopTime = 0.2f;
-    public float turnTime = 0.05f;
     private float moveTimer = 0f;
+
+    public float turnTime = 0.05f;
+    private float turnTimer = 0f;
 
     public float hopHeight = 0.5f;
     public float superHopHeight = 0.7f;
@@ -30,6 +34,16 @@ public class PlayerFrog : MonoBehaviour
     private float gravity = -9.8f;
     private float fallVelocity = 0f;
     private float startFallVelocity = -3f;
+
+    public Vector3 prepScaleDistort = new Vector3(1.1f, 0.8f, 1.1f);
+    public Vector3 superPrepScaleDistort = new Vector3(1.2f, 0.6f, 1.2f);
+    private Vector3 lastPrepDistort;
+    public float prepTime = 0.2f;
+    public float superPrepTime = 0.3f;
+    private float prepTimer = 0f;
+
+    private Vector3 lastInputDirection;
+    private Vector3 lastHopDirection;
 
     public Vector3 hopScaleDistort = new Vector3(0.7f, 1.5f, 0.7f);
 
@@ -44,6 +58,7 @@ public class PlayerFrog : MonoBehaviour
     private Quaternion nextRotation;
 
     private Quaternion lastModelRotation;
+    private Quaternion preNextModelRotation;
     private Quaternion nextModelRotation;
 
     private Vector3 lastNormal;
@@ -77,6 +92,11 @@ public class PlayerFrog : MonoBehaviour
         lastParent = null;
         nextParent = null;
 
+        lastPrepDistort = Vector3.one;
+
+        lastInputDirection = Vector3.zero;
+        lastHopDirection = Vector3.zero;
+
         state = PlayerState.STANDING;
 
         sphereCollider = GetComponent<SphereCollider>();
@@ -93,23 +113,31 @@ public class PlayerFrog : MonoBehaviour
         // Input and Collision Checking
         if (state == PlayerState.STANDING)
         {
-            if (Input.GetKeyDown(KeyCode.UpArrow))
+            if (Input.GetKey(KeyCode.UpArrow))
             {
                 hopDirection = CalculateHopMovement(Vector3.forward);
+                lastInputDirection = Vector3.forward;
+                turnTimer = turnTime;
             }
-            else if (Input.GetKeyDown(KeyCode.RightArrow))
+            else if (Input.GetKey(KeyCode.RightArrow))
             {
                 hopDirection = CalculateHopMovement(Vector3.right);
+                lastInputDirection = Vector3.right;
+                turnTimer = turnTime;
             }
-            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            else if (Input.GetKey(KeyCode.DownArrow))
             {
                 hopDirection = CalculateHopMovement(Vector3.back);
+                lastInputDirection = Vector3.back;
+                turnTimer = turnTime;
             }
-            else if (Input.GetKeyDown(KeyCode.LeftArrow))
+            else if (Input.GetKey(KeyCode.LeftArrow))
             {
                 hopDirection = CalculateHopMovement(Vector3.left);
+                lastInputDirection = Vector3.left;
+                turnTimer = turnTime;
             }
-            else if (Input.GetKeyDown(KeyCode.E))
+            else if (Input.GetKey(KeyCode.E))
             {
                 Vector3 tempHopDirection = transform.forward * 2f;
 
@@ -122,7 +150,8 @@ public class PlayerFrog : MonoBehaviour
                      && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + ((3 * tempHopDirection) / 4f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius, solidLayer))
                     {
                         hopDirection = tempHopDirection;
-                        state = PlayerState.SUPERHOPPING;
+                        state = PlayerState.SUPERPREPPING;
+                        prepTimer = superPrepTime;
                     }
                     else
                     {
@@ -133,6 +162,8 @@ public class PlayerFrog : MonoBehaviour
                 {
                     hopDirection = CalculateHopMovement(transform.forward);
                 }
+
+                lastInputDirection = transform.forward * 2f;
             }
             else if (Input.GetKeyDown(KeyCode.Q))
             {
@@ -146,6 +177,7 @@ public class PlayerFrog : MonoBehaviour
                     nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextModelForward, lastNormal);
 
                     moveTimer = turnTime;
+                    turnTimer = turnTime;
                     state = PlayerState.TURNING;
                 }
             }
@@ -161,26 +193,135 @@ public class PlayerFrog : MonoBehaviour
                     nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextModelForward, lastNormal);
 
                     moveTimer = turnTime;
+                    turnTimer = turnTime;
                     state = PlayerState.TURNING;
                 }
             }
         }
 
-        // Prepare Movement
+        // Prepare Movement before release
         if (hopDirection != Vector3.zero && moveTimer == 0f)
         {
             nextPosition = CalculateLocalSpaceNextPositionByDirection(hopDirection);
             nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(hopDirection, Vector3.up).eulerAngles.y, 0f);
 
-            Vector3 nextRight = Vector3.Cross(hopDirection, Vector3.up);
-            Vector3 nextForward = Vector3.Cross(nextNormal, nextRight);
-            nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextForward, nextNormal);
 
+
+            Vector3 nextRight = Vector3.Cross(hopDirection, Vector3.up);
+            Vector3 lastForward = Vector3.Cross(lastNormal, nextRight);
+            Vector3 nextForward = Vector3.Cross(nextNormal, nextRight);
+
+            preNextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(lastForward, lastNormal);
+            nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextForward, nextNormal);
+        }
+
+        // When prepping, distort player model. Release prepped player after input is let go of
+        if (state == PlayerState.PREPPING)
+        {
+            if (lastHopDirection == Vector3.zero)
+            {
+                lastHopDirection = hopDirection;
+            }
+
+            if (prepTimer > 0f) 
+            {
+                prepTimer -= Time.deltaTime;
+            } 
+            else
+            {
+                prepTimer = 0f;
+            }
+
+            // Pre-turn
+            if (turnTimer > 0f)
+            {
+                turnTimer -= Time.deltaTime;
+            }
+            else
+            {
+                turnTimer = 0f;
+            }
+
+            float normalizedPrepTimer = GetNormalizedPrepTimer();
+            float normalizedTurnTimer = GetNormalizedTurnTimer();
+
+            modelTransform.localScale = SmoothStepToAndBack(modelTransform.localScale, prepScaleDistort, normalizedPrepTimer);
+
+            transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedTurnTimer);
+            modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, preNextModelRotation, normalizedTurnTimer);
+
+            if ((!Input.GetKey(KeyCode.UpArrow) && lastInputDirection == Vector3.forward) ||
+                (!Input.GetKey(KeyCode.RightArrow) && lastInputDirection == Vector3.right) ||
+                (!Input.GetKey(KeyCode.DownArrow) && lastInputDirection == Vector3.back) ||
+                (!Input.GetKey(KeyCode.LeftArrow) && lastInputDirection == Vector3.left))
+            {
+                state = PlayerState.HOPPING;
+                prepTimer = 0f;
+                lastPrepDistort = modelTransform.localScale;
+            }
+            else if (!Input.GetKey(KeyCode.E))
+            {
+                if ((lastInputDirection == Vector3.forward * 2f) ||
+                    (lastInputDirection == Vector3.right * 2f) ||
+                    (lastInputDirection == Vector3.back * 2f) ||
+                    (lastInputDirection == Vector3.left * 2f))
+                {
+                    state = PlayerState.HOPPING;
+                    prepTimer = 0f;
+                    lastPrepDistort = modelTransform.localScale;
+                }
+            }
+        }
+
+        if (state == PlayerState.SUPERPREPPING)
+        {
+            if (lastHopDirection == Vector3.zero)
+            {
+                lastHopDirection = hopDirection;
+            }
+
+            if (prepTimer > 0f)
+            {
+                prepTimer -= Time.deltaTime;
+            }
+            else
+            {
+                prepTimer = 0f;
+            }
+
+            float normalizedPrepTimer = GetNormalizedPrepTimer();
+
+            modelTransform.localScale = SmoothStepToAndBack(modelTransform.localScale, superPrepScaleDistort, normalizedPrepTimer);
+
+            if (!Input.GetKey(KeyCode.E))
+            {
+                state = PlayerState.SUPERHOPPING;
+                prepTimer = 0f;
+                lastPrepDistort = modelTransform.localScale;
+            }
+        }
+
+        // Prepare Movement after release
+        if (lastHopDirection != Vector3.zero && moveTimer == 0f && (state == PlayerState.HOPPING || state == PlayerState.SUPERHOPPING))
+        {
             switch (state)
             {
                 case PlayerState.HOPPING: moveTimer = hopTime; break;
                 case PlayerState.SUPERHOPPING: moveTimer = superHopTime; break;
             }
+
+            lastHopDirection = Vector3.zero;
+            lastInputDirection = Vector3.zero;
+        }
+
+        // Turn
+        if (turnTimer > 0f)
+        {
+            turnTimer -= Time.deltaTime;
+        }
+        else
+        {
+            turnTimer = 0f;
         }
 
         // Movement
@@ -199,26 +340,29 @@ public class PlayerFrog : MonoBehaviour
                 moveTimer -= Time.deltaTime;
 
                 float normalizedMoveTimer = GetNormalizedMoveTimer();
+                float normalizedTurnTimer = GetNormalizedTurnTimer();
                 float hopHeightCurveY = GetHopHeightYAxis(normalizedMoveTimer);
 
-                transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
+                // transform.position = Vector3.Lerp(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
+                transform.position = VectorSmoothStep(CalculateWorldSpaceLastPosition(), CalculateWorldSpaceNextPosition(), normalizedMoveTimer);
 
                 if (state != PlayerState.TURNING)
                 {
                     transform.position += (Vector3.up * hopHeightCurveY);
                 }
 
-                modelTransform.localScale = new Vector3(SmoothStepToAndBack(1f, hopScaleDistort.x, normalizedMoveTimer), SmoothStepToAndBack(1f, hopScaleDistort.y, normalizedMoveTimer), SmoothStepToAndBack(1f, hopScaleDistort.z, normalizedMoveTimer));
+                modelTransform.localScale = SmoothStepToAndBack(lastPrepDistort, hopScaleDistort, normalizedMoveTimer);
 
-                transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedMoveTimer);
-                modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, nextModelRotation, normalizedMoveTimer);
+                transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedTurnTimer);
+                modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, nextModelRotation, normalizedTurnTimer);
             }
         }
 
         // Stop Moving
-        if (moveTimer <= 0f && state != PlayerState.FALLING)
+        if (moveTimer <= 0f && (state != PlayerState.STANDING && state != PlayerState.FALLING && state != PlayerState.PREPPING && state != PlayerState.SUPERPREPPING))
         {
             moveTimer = 0f;
+            turnTimer = 0f;
 
             transform.position = CalculateWorldSpaceNextPosition();
 
@@ -228,7 +372,11 @@ public class PlayerFrog : MonoBehaviour
 
             modelTransform.localRotation = nextModelRotation;
             lastModelRotation = modelTransform.localRotation;
+            preNextModelRotation = modelTransform.localRotation;
             nextModelRotation = modelTransform.localRotation;
+
+            modelTransform.localScale = Vector3.one;
+            lastPrepDistort = Vector3.one;
 
             lastNormal = nextNormal;
 
@@ -309,7 +457,8 @@ public class PlayerFrog : MonoBehaviour
         if (!Physics.CheckSphere(CalculateWorldSpaceLastPosition() + tempHopDirection + (Vector3.up * 0.5f), sphereCollider.radius, solidLayer)
          && !Physics.CheckSphere(CalculateWorldSpaceLastPosition() + (tempHopDirection / 2f) + (Vector3.up * (0.5f + GetHopHeightYAxis(0.5f))), sphereCollider.radius, solidLayer))
         {
-            state = PlayerState.HOPPING;
+            state = PlayerState.PREPPING;
+            prepTimer = prepTime;
             return tempHopDirection;
         }
         else if (transform.forward != inputDirection)
@@ -375,7 +524,7 @@ public class PlayerFrog : MonoBehaviour
         }
     }
 
-    public Vector3 CalculateLocalSpaceLastPosition()
+    private Vector3 CalculateLocalSpaceLastPosition()
     {
         if (lastParent != null)
         {
@@ -387,7 +536,7 @@ public class PlayerFrog : MonoBehaviour
         }
     }
 
-    public Vector3 CalculateLocalSpaceNextPosition()
+    private Vector3 CalculateLocalSpaceNextPosition()
     {
         if (nextParent != null)
         {
@@ -399,7 +548,7 @@ public class PlayerFrog : MonoBehaviour
         }
     }
 
-    public Vector3 CalculateLocalSpaceLastPosition(Vector3 position)
+    private Vector3 CalculateLocalSpaceLastPosition(Vector3 position)
     {
         if (lastParent != null)
         {
@@ -411,7 +560,7 @@ public class PlayerFrog : MonoBehaviour
         }
     }
 
-    public Vector3 CalculateLocalSpaceNextPosition(Vector3 position)
+    private Vector3 CalculateLocalSpaceNextPosition(Vector3 position)
     {
         if (nextParent != null)
         {
@@ -506,6 +655,21 @@ public class PlayerFrog : MonoBehaviour
         }
     }
 
+    private float GetNormalizedTurnTimer()
+    {
+        return 1 - (turnTimer / turnTime);
+    }
+
+    private float GetNormalizedPrepTimer()
+    {
+        switch (state)
+        {
+            case PlayerState.PREPPING: return 1 - (prepTimer / prepTime);
+            case PlayerState.SUPERPREPPING: return 1 - (prepTimer / superPrepTime);
+            default: return 0;
+        }
+    }
+
     private void Die()
     {
         if (!isDead)
@@ -529,6 +693,16 @@ public class PlayerFrog : MonoBehaviour
         } else {
             return Mathf.SmoothStep(adjustedTo, from, t);
         }
+    }
+
+    private Vector3 SmoothStepToAndBack(Vector3 from, Vector3 to, float t)
+    {
+        return new Vector3(SmoothStepToAndBack(from.x, to.x, t), SmoothStepToAndBack(from.y, to.y, t), SmoothStepToAndBack(from.z, to.z, t));
+    }
+
+    private Vector3 VectorSmoothStep(Vector3 from, Vector3 to, float t)
+    {
+        return new Vector3(Mathf.SmoothStep(from.x, to.x, t), Mathf.SmoothStep(from.y, to.y, t), Mathf.SmoothStep(from.z, to.z, t));
     }
 
     public static bool IsSnapped(Vector3 vec)
