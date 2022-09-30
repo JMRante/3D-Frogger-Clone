@@ -22,6 +22,7 @@ public class PlayerFrog : MonoBehaviour
 
     public float turnTime = 0.05f;
     private float turnTimer = 0f;
+    private bool turnLock = false;
 
     public float hopHeight = 0.5f;
     public float superHopHeight = 0.7f;
@@ -165,7 +166,7 @@ public class PlayerFrog : MonoBehaviour
 
                 lastInputDirection = transform.forward * 2f;
             }
-            else if (Input.GetKeyDown(KeyCode.Q))
+            else if (Input.GetKey(KeyCode.Q) && !turnLock)
             {
                 if (moveTimer == 0f)
                 {
@@ -179,9 +180,11 @@ public class PlayerFrog : MonoBehaviour
                     moveTimer = turnTime;
                     turnTimer = turnTime;
                     state = PlayerState.TURNING;
+
+                    turnLock = true;
                 }
             }
-            else if (Input.GetKeyDown(KeyCode.W))
+            else if (Input.GetKey(KeyCode.W) && !turnLock)
             {
                 if (moveTimer == 0f)
                 {
@@ -195,8 +198,15 @@ public class PlayerFrog : MonoBehaviour
                     moveTimer = turnTime;
                     turnTimer = turnTime;
                     state = PlayerState.TURNING;
+
+                    turnLock = true;
                 }
             }
+        }
+
+        // Unlock turning when input is released
+        if ((Input.GetKeyUp(KeyCode.Q) || Input.GetKeyUp(KeyCode.W)) && turnLock) {
+            turnLock = false;
         }
 
         // Prepare Movement before release
@@ -204,8 +214,6 @@ public class PlayerFrog : MonoBehaviour
         {
             nextPosition = CalculateLocalSpaceNextPositionByDirection(hopDirection);
             nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(hopDirection, Vector3.up).eulerAngles.y, 0f);
-
-
 
             Vector3 nextRight = Vector3.Cross(hopDirection, Vector3.up);
             Vector3 lastForward = Vector3.Cross(lastNormal, nextRight);
@@ -349,9 +357,8 @@ public class PlayerFrog : MonoBehaviour
                 if (state != PlayerState.TURNING)
                 {
                     transform.position += (Vector3.up * hopHeightCurveY);
+                    modelTransform.localScale = SmoothStepToTwice(lastPrepDistort, hopScaleDistort, Vector3.one, normalizedMoveTimer);
                 }
-
-                modelTransform.localScale = SmoothStepToAndBack(lastPrepDistort, hopScaleDistort, normalizedMoveTimer);
 
                 transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedTurnTimer);
                 modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, nextModelRotation, normalizedTurnTimer);
@@ -686,12 +693,25 @@ public class PlayerFrog : MonoBehaviour
 
     private float SmoothStepToAndBack(float from, float to, float t) 
     {
-        float adjustedTo = ((to - from) * 2f) + from;
+        if (t < 0.5f) 
+        {
+            return Mathf.SmoothStep(from, to, t * 2);
+        } 
+        else
+        {
+            return Mathf.SmoothStep(to, from, (t * 2) - 1);
+        }
+    }
 
-        if (t < 0.5f) {
-            return Mathf.SmoothStep(from, adjustedTo, t);
-        } else {
-            return Mathf.SmoothStep(adjustedTo, from, t);
+    private float SmoothStepToTwice(float from, float to1, float to2, float t)
+    {
+        if (t < 0.5f)
+        {
+            return Mathf.SmoothStep(from, to1, t * 2);
+        }
+        else
+        {
+            return Mathf.SmoothStep(to1, to2, (t * 2) - 1);
         }
     }
 
@@ -699,6 +719,12 @@ public class PlayerFrog : MonoBehaviour
     {
         return new Vector3(SmoothStepToAndBack(from.x, to.x, t), SmoothStepToAndBack(from.y, to.y, t), SmoothStepToAndBack(from.z, to.z, t));
     }
+
+    private Vector3 SmoothStepToTwice(Vector3 from, Vector3 to1, Vector3 to2, float t)
+    {
+        return new Vector3(SmoothStepToTwice(from.x, to1.x, to2.x, t), SmoothStepToTwice(from.y, to1.y, to2.y, t), SmoothStepToTwice(from.z, to1.z, to2.z, t));
+    }
+
 
     private Vector3 VectorSmoothStep(Vector3 from, Vector3 to, float t)
     {

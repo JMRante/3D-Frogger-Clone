@@ -143,12 +143,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hopTime: 0.125
-  superHopTime: 0.4
+  superHopTime: 0.35
   turnTime: 0.05
-  hopHeight: 0.7
-  superHopHeight: 1.2
+  hopHeight: 0.6
+  superHopHeight: 0.9
   hopMaxStepHeight: 0.6
   smoothSnapTime: 0.05
-  hopScaleDistort: {x: 0.7, y: 1.5, z: 0.7}
+  prepScaleDistort: {x: 1.1, y: 0.7, z: 1.1}
+  superPrepScaleDistort: {x: 1.2, y: 0.6, z: 1.2}
+  prepTime: 1
+  superPrepTime: 1.2
+  hopScaleDistort: {x: 0.7, y: 1.3, z: 0.7}
   state: 0
   modelTransform: {fileID: 1558926297348123091}

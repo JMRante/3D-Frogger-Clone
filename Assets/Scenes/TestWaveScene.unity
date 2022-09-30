@@ -1302,7 +1302,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 1986526385}
-  offsetFromPlayer: {x: 0, y: 7, z: -4}
+  offsetFromPlayer: {x: 0, y: 10, z: -6}
 --- !u!4 &343869128 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3603550130370925221, guid: 2cc769db8728bac4796038e0a8bcd2dd,
