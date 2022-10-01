@@ -327,6 +327,14 @@ public class PlayerFrog : MonoBehaviour
         // Prepare Movement after release
         if (lastHopDirection != Vector3.zero && moveTimer == 0f && (state == PlayerState.HOPPING || state == PlayerState.SUPERHOPPING))
         {
+            nextPosition = CalculateLocalSpaceNextPositionByDirection(lastHopDirection);
+            nextRotation = Quaternion.Euler(0f, Quaternion.LookRotation(lastHopDirection, Vector3.up).eulerAngles.y, 0f);
+
+            Vector3 nextRight = Vector3.Cross(lastHopDirection, Vector3.up);
+            Vector3 nextForward = Vector3.Cross(nextNormal, nextRight);
+
+            nextModelRotation = Quaternion.Inverse(nextRotation) * Quaternion.LookRotation(nextForward, nextNormal);
+
             switch (state)
             {
                 case PlayerState.HOPPING: moveTimer = hopTime; break;
@@ -381,35 +389,45 @@ public class PlayerFrog : MonoBehaviour
         }
 
         // Stop Moving
-        if (moveTimer <= 0f && (state != PlayerState.STANDING && state != PlayerState.FALLING && state != PlayerState.PREPPING && state != PlayerState.SUPERPREPPING))
+        if (moveTimer <= 0f)
         {
-            moveTimer = 0f;
-            turnTimer = 0f;
+            if (state == PlayerState.PREPPING || state == PlayerState.SUPERPREPPING)
+            {
+                transform.position = CalculateWorldSpaceLastPosition();
+            }
+            else
+            {
+                transform.position = CalculateWorldSpaceNextPosition();
+            }
 
-            transform.position = CalculateWorldSpaceNextPosition();
+            if (state != PlayerState.STANDING && state != PlayerState.FALLING && state != PlayerState.PREPPING && state != PlayerState.SUPERPREPPING)
+            {
+                moveTimer = 0f;
+                turnTimer = 0f;
 
-            transform.rotation = nextRotation;
-            lastRotation = transform.rotation;
-            nextRotation = transform.rotation;
+                transform.rotation = nextRotation;
+                lastRotation = transform.rotation;
+                nextRotation = transform.rotation;
 
-            modelTransform.localRotation = nextModelRotation;
-            lastModelRotation = modelTransform.localRotation;
-            preNextModelRotation = modelTransform.localRotation;
-            nextModelRotation = modelTransform.localRotation;
+                modelTransform.localRotation = nextModelRotation;
+                lastModelRotation = modelTransform.localRotation;
+                preNextModelRotation = modelTransform.localRotation;
+                nextModelRotation = modelTransform.localRotation;
 
-            modelTransform.localScale = Vector3.one;
+                modelTransform.localScale = Vector3.one;
 
-            lastPrepDistort = Vector3.one;
-            lastPrepRotation = nextRotation;
-            lastPrepModelRotation = nextModelRotation;
+                lastPrepDistort = Vector3.one;
+                lastPrepRotation = nextRotation;
+                lastPrepModelRotation = nextModelRotation;
 
-            lastNormal = nextNormal;
+                lastNormal = nextNormal;
 
-            lastParent = nextParent;
+                lastParent = nextParent;
 
-            lastPosition = RoundXZ(nextPosition);
-            nextPosition = RoundXZ(nextPosition);
-            state = PlayerState.STANDING;
+                lastPosition = RoundXZ(nextPosition);
+                nextPosition = RoundXZ(nextPosition);
+                state = PlayerState.STANDING;
+            }
         }
 
         // Falling
