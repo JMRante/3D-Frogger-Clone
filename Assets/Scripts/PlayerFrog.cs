@@ -389,7 +389,7 @@ public class PlayerFrog : MonoBehaviour
         }
 
         // Stop Moving
-        if (moveTimer <= 0f)
+        if (moveTimer <= 0f && state != PlayerState.FALLING)
         {
             if (state == PlayerState.PREPPING || state == PlayerState.SUPERPREPPING)
             {
@@ -400,7 +400,7 @@ public class PlayerFrog : MonoBehaviour
                 transform.position = CalculateWorldSpaceNextPosition();
             }
 
-            if (state != PlayerState.STANDING && state != PlayerState.FALLING && state != PlayerState.PREPPING && state != PlayerState.SUPERPREPPING)
+            if (state != PlayerState.STANDING && state != PlayerState.PREPPING && state != PlayerState.SUPERPREPPING)
             {
                 moveTimer = 0f;
                 turnTimer = 0f;
