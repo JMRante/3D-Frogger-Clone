@@ -149,9 +149,9 @@ MonoBehaviour:
   superHopHeight: 0.9
   hopMaxStepHeight: 0.6
   smoothSnapTime: 0.05
-  prepScaleDistort: {x: 1.1, y: 0.7, z: 1.1}
-  superPrepScaleDistort: {x: 1.2, y: 0.6, z: 1.2}
-  prepTime: 1
+  prepScaleDistort: {x: 1.1, y: 0.6, z: 1.1}
+  superPrepScaleDistort: {x: 1.2, y: 0.5, z: 1.2}
+  prepTime: 1.2
   superPrepTime: 1.2
   hopScaleDistort: {x: 0.7, y: 1.3, z: 0.7}
   state: 0

@@ -38,10 +38,13 @@ public class PlayerFrog : MonoBehaviour
 
     public Vector3 prepScaleDistort = new Vector3(1.1f, 0.8f, 1.1f);
     public Vector3 superPrepScaleDistort = new Vector3(1.2f, 0.6f, 1.2f);
-    private Vector3 lastPrepDistort;
     public float prepTime = 0.2f;
     public float superPrepTime = 0.3f;
     private float prepTimer = 0f;
+
+    private Vector3 lastPrepDistort;
+    private Quaternion lastPrepRotation;
+    private Quaternion lastPrepModelRotation;
 
     private Vector3 lastInputDirection;
     private Vector3 lastHopDirection;
@@ -94,6 +97,9 @@ public class PlayerFrog : MonoBehaviour
         nextParent = null;
 
         lastPrepDistort = Vector3.one;
+
+        lastPrepRotation = transform.rotation;
+        lastPrepModelRotation = modelTransform.localRotation;
 
         lastInputDirection = Vector3.zero;
         lastHopDirection = Vector3.zero;
@@ -265,7 +271,10 @@ public class PlayerFrog : MonoBehaviour
             {
                 state = PlayerState.HOPPING;
                 prepTimer = 0f;
+
                 lastPrepDistort = modelTransform.localScale;
+                lastPrepRotation = transform.rotation;
+                lastPrepModelRotation = modelTransform.localRotation;
             }
             else if (!Input.GetKey(KeyCode.E))
             {
@@ -276,7 +285,10 @@ public class PlayerFrog : MonoBehaviour
                 {
                     state = PlayerState.HOPPING;
                     prepTimer = 0f;
+                    
                     lastPrepDistort = modelTransform.localScale;
+                    lastPrepRotation = transform.rotation;
+                    lastPrepModelRotation = modelTransform.localRotation;
                 }
             }
         }
@@ -305,7 +317,10 @@ public class PlayerFrog : MonoBehaviour
             {
                 state = PlayerState.SUPERHOPPING;
                 prepTimer = 0f;
+
                 lastPrepDistort = modelTransform.localScale;
+                lastPrepRotation = transform.rotation;
+                lastPrepModelRotation = modelTransform.localRotation;
             }
         }
 
@@ -360,8 +375,8 @@ public class PlayerFrog : MonoBehaviour
                     modelTransform.localScale = SmoothStepToTwice(lastPrepDistort, hopScaleDistort, Vector3.one, normalizedMoveTimer);
                 }
 
-                transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedTurnTimer);
-                modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, nextModelRotation, normalizedTurnTimer);
+                transform.rotation = Quaternion.Slerp(lastPrepRotation, nextRotation, normalizedMoveTimer);
+                modelTransform.localRotation = Quaternion.Slerp(lastPrepModelRotation, nextModelRotation, normalizedMoveTimer);
             }
         }
 
@@ -383,7 +398,10 @@ public class PlayerFrog : MonoBehaviour
             nextModelRotation = modelTransform.localRotation;
 
             modelTransform.localScale = Vector3.one;
+
             lastPrepDistort = Vector3.one;
+            lastPrepRotation = nextRotation;
+            lastPrepModelRotation = nextModelRotation;
 
             lastNormal = nextNormal;
 
