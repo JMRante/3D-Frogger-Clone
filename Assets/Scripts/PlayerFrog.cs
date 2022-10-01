@@ -79,6 +79,15 @@ public class PlayerFrog : MonoBehaviour
     private int xzHopThroughAndSolidLayer;
     private int allSolidLayers;
 
+    private KeyCode hopUp = KeyCode.UpArrow;
+    private KeyCode hopRight = KeyCode.RightArrow;
+    private KeyCode hopDown = KeyCode.DownArrow;
+    private KeyCode hopLeft = KeyCode.LeftArrow;
+    private KeyCode superHop = KeyCode.Space;
+    private KeyCode tongue = KeyCode.LeftShift;
+    private KeyCode turnClockwise = KeyCode.Z;
+    private KeyCode turnCounterClockwise = KeyCode.X;
+
     void Start()
     {
         lastPosition = transform.localPosition;
@@ -120,31 +129,31 @@ public class PlayerFrog : MonoBehaviour
         // Input and Collision Checking
         if (state == PlayerState.STANDING)
         {
-            if (Input.GetKey(KeyCode.UpArrow))
+            if (Input.GetKey(hopUp))
             {
                 hopDirection = CalculateHopMovement(Vector3.forward);
                 lastInputDirection = Vector3.forward;
                 turnTimer = turnTime;
             }
-            else if (Input.GetKey(KeyCode.RightArrow))
+            else if (Input.GetKey(hopRight))
             {
                 hopDirection = CalculateHopMovement(Vector3.right);
                 lastInputDirection = Vector3.right;
                 turnTimer = turnTime;
             }
-            else if (Input.GetKey(KeyCode.DownArrow))
+            else if (Input.GetKey(hopDown))
             {
                 hopDirection = CalculateHopMovement(Vector3.back);
                 lastInputDirection = Vector3.back;
                 turnTimer = turnTime;
             }
-            else if (Input.GetKey(KeyCode.LeftArrow))
+            else if (Input.GetKey(hopLeft))
             {
                 hopDirection = CalculateHopMovement(Vector3.left);
                 lastInputDirection = Vector3.left;
                 turnTimer = turnTime;
             }
-            else if (Input.GetKey(KeyCode.E))
+            else if (Input.GetKey(superHop))
             {
                 Vector3 tempHopDirection = transform.forward * 2f;
 
@@ -172,7 +181,7 @@ public class PlayerFrog : MonoBehaviour
 
                 lastInputDirection = transform.forward * 2f;
             }
-            else if (Input.GetKey(KeyCode.Q) && !turnLock)
+            else if (Input.GetKey(turnClockwise) && !turnLock)
             {
                 if (moveTimer == 0f)
                 {
@@ -190,7 +199,7 @@ public class PlayerFrog : MonoBehaviour
                     turnLock = true;
                 }
             }
-            else if (Input.GetKey(KeyCode.W) && !turnLock)
+            else if (Input.GetKey(turnCounterClockwise) && !turnLock)
             {
                 if (moveTimer == 0f)
                 {
@@ -211,7 +220,7 @@ public class PlayerFrog : MonoBehaviour
         }
 
         // Unlock turning when input is released
-        if ((Input.GetKeyUp(KeyCode.Q) || Input.GetKeyUp(KeyCode.W)) && turnLock) {
+        if ((Input.GetKeyUp(turnClockwise) || Input.GetKeyUp(turnCounterClockwise)) && turnLock) {
             turnLock = false;
         }
 
@@ -264,10 +273,10 @@ public class PlayerFrog : MonoBehaviour
             transform.rotation = Quaternion.Slerp(lastRotation, nextRotation, normalizedTurnTimer);
             modelTransform.localRotation = Quaternion.Slerp(lastModelRotation, preNextModelRotation, normalizedTurnTimer);
 
-            if ((!Input.GetKey(KeyCode.UpArrow) && lastInputDirection == Vector3.forward) ||
-                (!Input.GetKey(KeyCode.RightArrow) && lastInputDirection == Vector3.right) ||
-                (!Input.GetKey(KeyCode.DownArrow) && lastInputDirection == Vector3.back) ||
-                (!Input.GetKey(KeyCode.LeftArrow) && lastInputDirection == Vector3.left))
+            if ((!Input.GetKey(hopUp) && lastInputDirection == Vector3.forward) ||
+                (!Input.GetKey(hopRight) && lastInputDirection == Vector3.right) ||
+                (!Input.GetKey(hopDown) && lastInputDirection == Vector3.back) ||
+                (!Input.GetKey(hopLeft) && lastInputDirection == Vector3.left))
             {
                 state = PlayerState.HOPPING;
                 prepTimer = 0f;
@@ -276,7 +285,7 @@ public class PlayerFrog : MonoBehaviour
                 lastPrepRotation = transform.rotation;
                 lastPrepModelRotation = modelTransform.localRotation;
             }
-            else if (!Input.GetKey(KeyCode.E))
+            else if (!Input.GetKey(superHop))
             {
                 if ((lastInputDirection == Vector3.forward * 2f) ||
                     (lastInputDirection == Vector3.right * 2f) ||
@@ -313,7 +322,7 @@ public class PlayerFrog : MonoBehaviour
 
             modelTransform.localScale = SmoothStepToAndBack(modelTransform.localScale, superPrepScaleDistort, normalizedPrepTimer);
 
-            if (!Input.GetKey(KeyCode.E))
+            if (!Input.GetKey(superHop))
             {
                 state = PlayerState.SUPERHOPPING;
                 prepTimer = 0f;
