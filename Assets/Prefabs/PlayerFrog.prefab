@@ -149,10 +149,11 @@ MonoBehaviour:
   superHopHeight: 0.9
   hopMaxStepHeight: 0.6
   smoothSnapTime: 0.05
-  prepScaleDistort: {x: 1.1, y: 0.6, z: 1.1}
-  superPrepScaleDistort: {x: 1.2, y: 0.5, z: 1.2}
+  prepScaleDistort: {x: 1.08, y: 0.8, z: 1.08}
+  superPrepScaleDistort: {x: 1.2, y: 0.6, z: 1.2}
   prepTime: 1.2
   superPrepTime: 1.2
   hopScaleDistort: {x: 0.7, y: 1.3, z: 0.7}
   state: 0
   modelTransform: {fileID: 1558926297348123091}
+  ragdoll: {fileID: 2879392182291188095, guid: 446ec594cd40fb848953836181610bfe, type: 3}

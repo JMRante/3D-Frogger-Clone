@@ -74,6 +74,7 @@ public class PlayerFrog : MonoBehaviour
     private SphereCollider sphereCollider;
 
     private bool isDead = false;
+    public GameObject ragdoll;
 
     private int solidLayer;
     private int xzHopThroughAndSolidLayer;
@@ -726,6 +727,11 @@ public class PlayerFrog : MonoBehaviour
     {
         if (!isDead)
         {
+            if (ragdoll != null)
+            {
+                Instantiate(ragdoll, transform.position, transform.rotation);
+            }
+
             Destroy(gameObject);
             isDead = true;
         }
