@@ -34,7 +34,7 @@ public class PlayerFrog : MonoBehaviour
 
     private float gravity = -9.8f;
     private float fallVelocity = 0f;
-    private float startFallVelocity = -3f;
+    public float startFallVelocity = 0f;
 
     public Vector3 prepScaleDistort = new Vector3(1.1f, 0.8f, 1.1f);
     public Vector3 superPrepScaleDistort = new Vector3(1.2f, 0.6f, 1.2f);
